@@ -355,7 +355,7 @@ const Dashboard = () => {
                       <div>
                         <p className="font-medium">{s.skill_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {isTeacher ? `Teaching ${otherName}` : `Learning from ${otherName}`} · <span className={`font-medium ${s.status === "completed" ? "text-green-600" : s.status === "rejected" ? "text-destructive" : "text-primary"}`}>{s.status}</span>
+                          {isTeacher ? `Teaching ${otherName}` : `Learning from ${otherName}`} · <span className={`font-medium ${s.status === "completed" ? "text-green-600" : s.status === "confirmed" ? "text-emerald-500" : s.status === "rejected" ? "text-destructive" : "text-primary"}`}>{s.status}</span>
                         </p>
                         {(s as any).scheduled_date && (
                           <p className="text-xs text-muted-foreground mt-1">
@@ -370,14 +370,22 @@ const Dashboard = () => {
                             <Button size="sm" variant="destructive" onClick={() => updateSession(s.id, "rejected")}><X className="h-3 w-3 mr-1" /> Reject</Button>
                           </>
                         )}
-                        {s.status === "accepted" && (
+                        {s.status === "accepted" && isTeacher && (
+                          <Button size="sm" className="gradient-primary" onClick={() => updateSession(s.id, "confirmed")}>
+                            <CalendarIcon className="h-3 w-3 mr-1" /> Confirm Schedule
+                          </Button>
+                        )}
+                        {s.status === "accepted" && !isTeacher && (
+                          <span className="text-xs text-muted-foreground italic">Awaiting schedule confirmation…</span>
+                        )}
+                        {s.status === "confirmed" && (
                           <Button size="sm" className="gradient-primary" onClick={() => updateSession(s.id, "completed")}><Check className="h-3 w-3 mr-1" /> Complete</Button>
                         )}
                         {s.status === "completed" && !s.rating && !isTeacher && (
                           <Button size="sm" variant="outline" onClick={() => setRatingSessionId(s.id)}><Star className="h-3 w-3 mr-1" /> Rate</Button>
                         )}
                         {s.rating && <span className="text-sm flex items-center gap-1"><Star className="h-3 w-3 text-yellow-500 fill-yellow-500" /> {s.rating}/5</span>}
-                        {chatRoomMap[s.id] && (s.status === "accepted" || s.status === "completed") && (
+                        {chatRoomMap[s.id] && (s.status === "accepted" || s.status === "confirmed" || s.status === "completed") && (
                           <Link to={`/chat/${chatRoomMap[s.id]}`}>
                             <Button size="sm" variant="outline"><MessageCircle className="h-3 w-3 mr-1" /> Chat</Button>
                           </Link>
