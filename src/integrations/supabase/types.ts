@@ -170,33 +170,48 @@ export type Database = {
       sessions: {
         Row: {
           created_at: string
+          end_time: string | null
           id: string
           learner_id: string
+          meeting_type: string
           rating: number | null
+          reminder_sent: boolean
           review: string | null
+          scheduled_date: string | null
           skill_name: string
+          start_time: string | null
           status: string
           teacher_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          end_time?: string | null
           id?: string
           learner_id: string
+          meeting_type?: string
           rating?: number | null
+          reminder_sent?: boolean
           review?: string | null
+          scheduled_date?: string | null
           skill_name: string
+          start_time?: string | null
           status?: string
           teacher_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          end_time?: string | null
           id?: string
           learner_id?: string
+          meeting_type?: string
           rating?: number | null
+          reminder_sent?: boolean
           review?: string | null
+          scheduled_date?: string | null
           skill_name?: string
+          start_time?: string | null
           status?: string
           teacher_id?: string
           updated_at?: string
