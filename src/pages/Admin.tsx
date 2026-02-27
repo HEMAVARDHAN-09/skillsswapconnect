@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { ArrowLeft, Users, BookOpen, Calendar, Trash2, BarChart3, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, BookOpen, Calendar, Trash2, BarChart3, Loader2, Flag, CheckCircle } from "lucide-react";
 
 const Admin = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -14,6 +14,8 @@ const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [reportProfiles, setReportProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,14 +26,24 @@ const Admin = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: u }, { data: sk }, { data: se }] = await Promise.all([
+    const [{ data: u }, { data: sk }, { data: se }, { data: rp }] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("skills").select("*"),
       supabase.from("sessions").select("*"),
+      supabase.from("reports").select("*").order("created_at", { ascending: false }),
     ]);
     setUsers(u || []);
     setSkills(sk || []);
     setSessions(se || []);
+    setReports(rp || []);
+    // Load reporter/reported names
+    if (rp?.length) {
+      const ids = [...new Set(rp.flatMap((r: any) => [r.reporter_id, r.reported_id]))];
+      const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
+      const map: Record<string, string> = {};
+      profs?.forEach((p) => { map[p.user_id] = p.name; });
+      setReportProfiles(map);
+    }
     setLoading(false);
   };
 
@@ -44,6 +56,12 @@ const Admin = () => {
   const deleteSession = async (id: string) => {
     await supabase.from("sessions").delete().eq("id", id);
     toast.success("Session deleted");
+    loadAll();
+  };
+
+  const updateReportStatus = async (id: string, status: string) => {
+    await supabase.from("reports").update({ status }).eq("id", id);
+    toast.success(`Report ${status}`);
     loadAll();
   };
 
@@ -128,6 +146,38 @@ const Admin = () => {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+
+        {/* Reports Table */}
+        <Card className="glass-card">
+          <CardHeader><CardTitle className="flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" /> User Reports</CardTitle></CardHeader>
+          <CardContent>
+            {reports.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No reports yet.</p>
+            ) : (
+              <Table>
+                <TableHeader><TableRow><TableHead>Reporter</TableHead><TableHead>Reported</TableHead><TableHead>Reason</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {reports.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>{reportProfiles[r.reporter_id] || "Unknown"}</TableCell>
+                      <TableCell>{reportProfiles[r.reported_id] || "Unknown"}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{r.reason}</TableCell>
+                      <TableCell><span className={`text-xs font-medium px-2 py-1 rounded-full ${r.status === "pending" ? "bg-yellow-100 text-yellow-800" : r.status === "reviewed" ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}`}>{r.status}</span></TableCell>
+                      <TableCell className="flex gap-1">
+                        {r.status === "pending" && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => updateReportStatus(r.id, "reviewed")}><CheckCircle className="h-3 w-3 mr-1" /> Review</Button>
+                            <Button size="sm" variant="ghost" onClick={() => updateReportStatus(r.id, "dismissed")}>Dismiss</Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
