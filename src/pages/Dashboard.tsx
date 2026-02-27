@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, Plus, Coins, BookOpen, GraduationCap, Star, Trophy, Loader2, Trash2, Send, Check, X, MessageSquare, Users, MessageCircle } from "lucide-react";
+import { LogOut, Plus, Coins, BookOpen, GraduationCap, Star, Trophy, Loader2, Trash2, Send, Check, X, MessageSquare, Users, MessageCircle, CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { ScheduleSessionDialog } from "@/components/ScheduleSessionDialog";
+import { format } from "date-fns";
 
 type Skill = { id: string; user_id: string; skill_name: string; level: string; type: string; mode: string };
 type Match = { user_id: string; name: string; skill_name: string; level: string; mode: string };
@@ -40,6 +42,9 @@ const Dashboard = () => {
   const [ratingSessionId, setRatingSessionId] = useState<string | null>(null);
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
+
+  // Scheduling
+  const [scheduleMatch, setScheduleMatch] = useState<Match | null>(null);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -125,11 +130,30 @@ const Dashboard = () => {
     await loadSkills();
   };
 
-  const bookSession = async (match: Match) => {
+  const openScheduleDialog = (match: Match) => {
     if (!profile || profile.credits < 1) { toast.error("Not enough credits! Teach a session to earn more."); return; }
-    const { error } = await supabase.from("sessions").insert({ teacher_id: match.user_id, learner_id: user!.id, skill_name: match.skill_name });
+    setScheduleMatch(match);
+  };
+
+  const bookSession = async (details: {
+    scheduled_date: string;
+    start_time: string;
+    end_time: string;
+    meeting_type: string;
+  }) => {
+    if (!scheduleMatch) return;
+    const { error } = await supabase.from("sessions").insert({
+      teacher_id: scheduleMatch.user_id,
+      learner_id: user!.id,
+      skill_name: scheduleMatch.skill_name,
+      scheduled_date: details.scheduled_date,
+      start_time: details.start_time,
+      end_time: details.end_time,
+      meeting_type: details.meeting_type,
+    } as any);
     if (error) { toast.error(error.message); return; }
     toast.success("Session request sent!");
+    setScheduleMatch(null);
     await loadData();
   };
 
@@ -305,8 +329,8 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">{m.level} · {m.mode}</p>
-                    <Button size="sm" className="w-full gradient-primary" onClick={() => bookSession(m)}>
-                      <Send className="h-3 w-3 mr-1" /> Book Session
+                    <Button size="sm" className="w-full gradient-primary" onClick={() => openScheduleDialog(m)}>
+                      <CalendarIcon className="h-3 w-3 mr-1" /> Schedule Session
                     </Button>
                   </div>
                 ))}
@@ -333,6 +357,11 @@ const Dashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           {isTeacher ? `Teaching ${otherName}` : `Learning from ${otherName}`} · <span className={`font-medium ${s.status === "completed" ? "text-green-600" : s.status === "rejected" ? "text-destructive" : "text-primary"}`}>{s.status}</span>
                         </p>
+                        {(s as any).scheduled_date && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            📅 {format(new Date((s as any).scheduled_date), "PPP")} · 🕐 {(s as any).start_time?.slice(0, 5)} – {(s as any).end_time?.slice(0, 5)} · 📍 {(s as any).meeting_type === "in_person" ? "In Person" : "Online"}
+                          </p>
+                        )}
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {s.status === "pending" && isTeacher && (
@@ -406,6 +435,15 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Schedule Session Dialog */}
+        <ScheduleSessionDialog
+          open={!!scheduleMatch}
+          onOpenChange={(open) => !open && setScheduleMatch(null)}
+          matchName={scheduleMatch?.name || ""}
+          skillName={scheduleMatch?.skill_name || ""}
+          onConfirm={bookSession}
+        />
       </div>
     </div>
   );
