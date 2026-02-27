@@ -173,7 +173,7 @@ const Dashboard = () => {
     await loadData();
   };
 
-  if (loading) return (
+  if (!user || loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <Loader2 className="animate-spin h-8 w-8 text-primary" />
     </div>
