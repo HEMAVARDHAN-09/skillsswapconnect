@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, Plus, Coins, BookOpen, GraduationCap, Star, Trophy, Loader2, Trash2, Send, Check, X, MessageSquare, Users } from "lucide-react";
+import { LogOut, Plus, Coins, BookOpen, GraduationCap, Star, Trophy, Loader2, Trash2, Send, Check, X, MessageSquare, Users, MessageCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 type Skill = { id: string; user_id: string; skill_name: string; level: string; type: string; mode: string };
@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [sessionProfiles, setSessionProfiles] = useState<Record<string, string>>({});
+  const [chatRoomMap, setChatRoomMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   // Add skill form
@@ -48,7 +49,7 @@ const Dashboard = () => {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-    await Promise.all([loadSkills(), loadMatches(), loadSessions(), loadLeaderboard()]);
+    await Promise.all([loadSkills(), loadMatches(), loadSessions(), loadLeaderboard(), loadChatRooms()]);
     await refreshProfile();
     setLoading(false);
   };
@@ -86,6 +87,14 @@ const Dashboard = () => {
       profs?.forEach((p) => (map[p.user_id] = p.name));
       setSessionProfiles(map);
     }
+  };
+
+  const loadChatRooms = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("chat_rooms").select("id, session_id").or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+    const map: Record<string, string> = {};
+    data?.forEach((r) => { map[r.session_id] = r.id; });
+    setChatRoomMap(map);
   };
 
   const loadLeaderboard = async () => {
@@ -127,11 +136,23 @@ const Dashboard = () => {
   const updateSession = async (sessionId: string, status: string) => {
     const { error } = await supabase.from("sessions").update({ status }).eq("id", sessionId);
     if (error) { toast.error(error.message); return; }
+    if (status === "accepted") {
+      // Auto-create chat room
+      const session = sessions.find((s) => s.id === sessionId);
+      if (session) {
+        const { error: chatErr } = await supabase.from("chat_rooms").insert({
+          session_id: sessionId,
+          user1_id: session.teacher_id,
+          user2_id: session.learner_id,
+        });
+        if (chatErr && !chatErr.message.includes("duplicate")) {
+          console.error("Chat room creation error:", chatErr);
+        }
+      }
+    }
     if (status === "completed") {
       const session = sessions.find((s) => s.id === sessionId);
       if (session) {
-        // Teacher gets +1 credit
-        await supabase.rpc("has_role", { _user_id: session.teacher_id, _role: "user" }); // dummy to ensure connection
         const { data: teacherProfile } = await supabase.from("profiles").select("credits").eq("user_id", session.teacher_id).single();
         const { data: learnerProfile } = await supabase.from("profiles").select("credits").eq("user_id", session.learner_id).single();
         if (teacherProfile) await supabase.from("profiles").update({ credits: teacherProfile.credits + 1 }).eq("user_id", session.teacher_id);
@@ -327,6 +348,11 @@ const Dashboard = () => {
                           <Button size="sm" variant="outline" onClick={() => setRatingSessionId(s.id)}><Star className="h-3 w-3 mr-1" /> Rate</Button>
                         )}
                         {s.rating && <span className="text-sm flex items-center gap-1"><Star className="h-3 w-3 text-yellow-500 fill-yellow-500" /> {s.rating}/5</span>}
+                        {chatRoomMap[s.id] && (s.status === "accepted" || s.status === "completed") && (
+                          <Link to={`/chat/${chatRoomMap[s.id]}`}>
+                            <Button size="sm" variant="outline"><MessageCircle className="h-3 w-3 mr-1" /> Chat</Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
