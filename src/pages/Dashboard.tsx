@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, Plus, Coins, BookOpen, GraduationCap, Star, Trophy, Loader2, Trash2, Send, Check, X, MessageSquare, Users, MessageCircle, CalendarIcon } from "lucide-react";
+import { LogOut, Plus, Coins, BookOpen, GraduationCap, Star, Trophy, Loader2, Trash2, Send, Check, X, MessageSquare, Users, MessageCircle, CalendarIcon, Video } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ScheduleSessionDialog } from "@/components/ScheduleSessionDialog";
 import { format } from "date-fns";
@@ -380,6 +380,11 @@ const Dashboard = () => {
                         )}
                         {s.status === "confirmed" && (
                           <Button size="sm" className="gradient-primary" onClick={() => updateSession(s.id, "completed")}><Check className="h-3 w-3 mr-1" /> Complete</Button>
+                        )}
+                        {s.status === "confirmed" && (s as any).meeting_type === "online" && (
+                          <Link to={`/session/${s.id}/video`}>
+                            <Button size="sm" variant="outline"><Video className="h-3 w-3 mr-1" /> Join Session</Button>
+                          </Link>
                         )}
                         {s.status === "completed" && !s.rating && !isTeacher && (
                           <Button size="sm" variant="outline" onClick={() => setRatingSessionId(s.id)}><Star className="h-3 w-3 mr-1" /> Rate</Button>
