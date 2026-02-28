@@ -8,6 +8,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+const NETWORK_ERRORS = ["Failed to fetch", "NetworkError", "Network request failed", "Load failed"];
+
+async function retryAsync(fn: () => Promise<void>, maxRetries = 3, baseDelay = 1000) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      const isNetwork = NETWORK_ERRORS.some((e) => msg.includes(e));
+      if (!isNetwork || attempt === maxRetries - 1) throw err;
+      toast.info("Connection issue, retrying…");
+      await new Promise((r) => setTimeout(r, baseDelay * 2 ** attempt));
+    }
+  }
+}
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +35,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signIn(email, password);
+      await retryAsync(() => signIn(email, password));
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
