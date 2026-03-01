@@ -1,0 +1,2 @@
+ALTER TABLE public.sessions DROP CONSTRAINT sessions_status_check;
+ALTER TABLE public.sessions ADD CONSTRAINT sessions_status_check CHECK (status = ANY (ARRAY['pending'::text, 'accepted'::text, 'rejected'::text, 'confirmed'::text, 'completed'::text]));
