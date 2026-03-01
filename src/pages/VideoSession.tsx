@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { PhoneOff, Clock, ArrowLeft, VideoOff, AlertTriangle } from "lucide-react";
+import { PhoneOff, Clock, ArrowLeft, VideoOff, AlertTriangle, Circle, Square, Monitor } from "lucide-react";
+import { useScreenRecording } from "@/hooks/useScreenRecording";
 
 const VideoSession = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -20,6 +21,7 @@ const VideoSession = () => {
   const [mediaError, setMediaError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
+  const { isRecording, startRecording, stopRecording } = useScreenRecording();
 
   // Fetch session and check authorization
   useEffect(() => {
@@ -97,6 +99,7 @@ const VideoSession = () => {
 
   // End session: log end_time
   const handleEnd = async () => {
+    if (isRecording) stopRecording();
     if (timerRef.current) clearInterval(timerRef.current);
 
     const now = new Date();
@@ -157,7 +160,21 @@ const VideoSession = () => {
             <span className="font-mono text-sm font-medium">{formatTime(elapsed)}</span>
           </div>
 
-          {/* Start / End buttons */}
+          {/* Recording + Start / End buttons */}
+          {started && (
+            isRecording ? (
+              <Button variant="outline" onClick={stopRecording} className="border-destructive text-destructive hover:bg-destructive/10">
+                <Square className="h-3 w-3 mr-2 fill-destructive" />
+                Stop Recording
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={startRecording}>
+                <Circle className="h-3 w-3 mr-2 fill-destructive text-destructive" />
+                Record
+              </Button>
+            )
+          )}
+
           {!started ? (
             <Button onClick={handleStart} className="gradient-primary">
               Start Session
