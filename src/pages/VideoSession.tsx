@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { PhoneOff, Clock, ArrowLeft } from "lucide-react";
+import { PhoneOff, Clock, ArrowLeft, VideoOff, AlertTriangle } from "lucide-react";
 
 const VideoSession = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -17,6 +17,7 @@ const VideoSession = () => {
   const [authorized, setAuthorized] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
@@ -62,6 +63,21 @@ const VideoSession = () => {
 
   // Start session: log start_time
   const handleStart = async () => {
+    // Check camera/microphone permissions first
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setMediaError(null);
+    } catch (err: any) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setMediaError("Camera and microphone access was denied. Please allow permissions in your browser settings and try again.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        setMediaError("No camera or microphone found. Please connect a device and try again.");
+      } else {
+        setMediaError("Could not access camera/microphone. You can still join, but video may not work.");
+      }
+    }
+
     const now = new Date();
     startTimeRef.current = now;
     setStarted(true);
@@ -158,12 +174,37 @@ const VideoSession = () => {
       {/* Jitsi iframe */}
       <div className="flex-1 relative">
         {started ? (
-          <iframe
-            src={`https://meet.jit.si/${jitsiRoom}#config.prejoinConfig.enabled=false&userInfo.displayName=${encodeURIComponent(user?.user_metadata?.name || "User")}`}
-            className="w-full h-full absolute inset-0 border-0"
-            allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
-            title="Video Session"
-          />
+          <>
+            {mediaError && (
+              <div className="absolute top-0 left-0 right-0 z-10 bg-destructive/10 border-b border-destructive/30 px-4 py-3 flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+                <p className="text-sm text-destructive font-medium">{mediaError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto shrink-0"
+                  onClick={async () => {
+                    try {
+                      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                      stream.getTracks().forEach((t) => t.stop());
+                      setMediaError(null);
+                      toast.success("Permissions granted! Reload the video panel if needed.");
+                    } catch {
+                      toast.error("Still unable to access camera/microphone.");
+                    }
+                  }}
+                >
+                  Retry
+                </Button>
+              </div>
+            )}
+            <iframe
+              src={`https://meet.jit.si/${jitsiRoom}#config.prejoinConfig.enabled=false&userInfo.displayName=${encodeURIComponent(user?.user_metadata?.name || "User")}`}
+              className="w-full h-full absolute inset-0 border-0"
+              allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
+              title="Video Session"
+            />
+          </>
         ) : (
           <div className="flex-1 flex items-center justify-center h-full absolute inset-0">
             <Card className="p-8 text-center max-w-md">
