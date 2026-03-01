@@ -5,8 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { PhoneOff, Clock, ArrowLeft, VideoOff, AlertTriangle, Circle, Square, Monitor } from "lucide-react";
+import { PhoneOff, Clock, ArrowLeft, AlertTriangle, Circle, Square } from "lucide-react";
 import { useScreenRecording } from "@/hooks/useScreenRecording";
+
+const JAAS_APP_ID = "vpaas-magic-cookie-b393d1356bfd40289fe77f27eee1fef6";
 
 const VideoSession = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -21,6 +23,8 @@ const VideoSession = () => {
   const [mediaError, setMediaError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
+  const jitsiContainerRef = useRef<HTMLDivElement | null>(null);
+  const jitsiApiRef = useRef<any>(null);
   const { isRecording, startRecording, stopRecording } = useScreenRecording();
 
   // Fetch session and check authorization
@@ -116,8 +120,71 @@ const VideoSession = () => {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (jitsiApiRef.current) {
+        jitsiApiRef.current.dispose();
+        jitsiApiRef.current = null;
+      }
     };
   }, []);
+
+  // Initialize JaaS when session starts
+  useEffect(() => {
+    if (!started || !jitsiContainerRef.current) return;
+
+    const loadJaaS = () => {
+      // Check if JitsiMeetExternalAPI is available
+      if (!(window as any).JitsiMeetExternalAPI) {
+        // Load script dynamically
+        const script = document.createElement("script");
+        script.src = `https://8x8.vc/${JAAS_APP_ID}/external_api.js`;
+        script.async = true;
+        script.onload = () => initJitsi();
+        script.onerror = () => {
+          setMediaError("Failed to load video conference. Please refresh and try again.");
+        };
+        document.head.appendChild(script);
+      } else {
+        initJitsi();
+      }
+    };
+
+    const initJitsi = () => {
+      if (jitsiApiRef.current) return; // Already initialized
+
+      const api = new (window as any).JitsiMeetExternalAPI("8x8.vc", {
+        roomName: `${JAAS_APP_ID}/skillswap-${sessionId}`,
+        parentNode: jitsiContainerRef.current,
+        userInfo: {
+          displayName: user?.user_metadata?.name || "User",
+          email: user?.email || "",
+        },
+        configOverwrite: {
+          prejoinConfig: { enabled: false },
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableDeepLinking: true,
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          TOOLBAR_BUTTONS: [
+            "camera", "chat", "closedcaptions", "desktop",
+            "fullscreen", "hangup", "microphone",
+            "participants-pane", "raisehand", "settings",
+            "tileview", "toggle-camera", "videoquality",
+          ],
+        },
+      });
+
+      api.addListener("videoConferenceLeft", () => {
+        // User left via Jitsi's own hangup button
+      });
+
+      jitsiApiRef.current = api;
+    };
+
+    loadJaaS();
+  }, [started, sessionId, user]);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -126,7 +193,6 @@ const VideoSession = () => {
     return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  // Jitsi room name is deterministic based on session ID
   const jitsiRoom = `skillswap-${sessionId}`;
 
   if (loading) {
@@ -215,11 +281,9 @@ const VideoSession = () => {
                 </Button>
               </div>
             )}
-            <iframe
-              src={`https://meet.jit.si/${jitsiRoom}#config.prejoinConfig.enabled=false&userInfo.displayName=${encodeURIComponent(user?.user_metadata?.name || "User")}`}
-              className="w-full h-full absolute inset-0 border-0"
-              allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
-              title="Video Session"
+            <div
+              ref={jitsiContainerRef}
+              className="w-full h-full absolute inset-0"
             />
           </>
         ) : (
