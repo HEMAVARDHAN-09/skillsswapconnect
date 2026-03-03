@@ -1,26 +1,35 @@
 
 
-## Add Login Retry Mechanism
+# Fix: Auto-refresh sessions + logout-on-refresh bug
 
-### Problem
-The login form shows "Failed to fetch" errors due to transient network issues, with no automatic recovery.
+## Problem 1: Learner page doesn't update when teacher accepts
+The Dashboard loads session data once on mount but has no realtime subscription. When the teacher accepts a session, the learner's page doesn't reflect the change until they manually refresh.
 
-### Solution
-Add an automatic retry mechanism (up to 3 attempts with exponential backoff) to the login form's sign-in logic, so transient network failures are handled gracefully without requiring the user to manually retry.
+**Fix:** Add a Supabase Realtime subscription in `Dashboard.tsx` that listens for changes on the `sessions` table (filtered to the current user). When a change is detected, automatically reload sessions data.
 
-### Technical Details
+## Problem 2: Page refresh causes logout
+There's a race condition in `AuthContext.tsx`. Both `onAuthStateChange` and `getSession` run simultaneously on mount. The `onAuthStateChange` listener can fire with a `null` session before the persisted session is restored from storage. This sets `user` to `null` and `loading` to `false`, which triggers the Dashboard's redirect to `/login` (`if (!user) { navigate("/login"); }`).
 
-**File: `src/pages/Login.tsx`**
+**Fix:** Restructure the auth initialization to:
+1. Set up `onAuthStateChange` first (but don't set loading to false on initial null events)
+2. Use `getSession` as the primary source for the initial session
+3. Only set `loading = false` after `getSession` completes, ensuring the persisted session is checked before any redirect logic runs
 
-1. Create a helper function `retryAsync(fn, maxRetries, baseDelay)` that:
-   - Attempts the async function up to 3 times
-   - Uses exponential backoff (1s, 2s, 4s delays)
-   - Only retries on network errors ("Failed to fetch", "NetworkError", "Network request failed")
-   - Throws immediately for auth errors (wrong password, user not found, etc.)
+## Technical Changes
 
-2. Update `handleSubmit` to wrap the `signIn` call with the retry helper
+### File: `src/contexts/AuthContext.tsx`
+- Add an `initialized` ref to track whether `getSession` has completed
+- In `onAuthStateChange`, skip setting loading to false until after initialization
+- Only rely on `getSession` to flip `loading` from true to false on first load
+- After initialization, `onAuthStateChange` handles all subsequent auth events normally
 
-3. Show a toast when retrying so the user knows what's happening (e.g., "Connection issue, retrying...")
+### File: `src/pages/Dashboard.tsx`
+- Add a `useEffect` that subscribes to Supabase Realtime on the `sessions` table
+- Filter for changes where `teacher_id` or `learner_id` matches the current user
+- On any `INSERT`, `UPDATE`, or `DELETE` event, call `loadSessions()` and `loadChatRooms()` to refresh the relevant data
+- Clean up the channel subscription on unmount
 
-No database or backend changes needed -- this is a frontend-only improvement.
+These two changes together ensure:
+- The learner sees session status updates (accepted, confirmed, etc.) in real time without refreshing
+- Refreshing the browser page correctly restores the auth session instead of logging the user out
 
