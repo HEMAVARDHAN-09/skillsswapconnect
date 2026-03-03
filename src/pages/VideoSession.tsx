@@ -269,11 +269,13 @@ const VideoSession = () => {
             <Button onClick={handleStart} className="gradient-primary">
               Start Session
             </Button>
-          ) : (
+          ) : isTeacher ? (
             <Button variant="destructive" onClick={handleEnd}>
               <PhoneOff className="h-4 w-4 mr-2" />
               End Session
             </Button>
+          ) : (
+            <span className="text-sm text-muted-foreground px-2">Waiting for teacher to end…</span>
           )}
         </div>
       </header>
