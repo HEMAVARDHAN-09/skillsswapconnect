@@ -101,7 +101,9 @@ const VideoSession = () => {
     toast.success("Session started!");
   };
 
-  // End session: log end_time
+  const isTeacher = session?.teacher_id === user?.id;
+
+  // End session: log end_time (teacher only)
   const handleEnd = async () => {
     if (isRecording) stopRecording();
     if (timerRef.current) clearInterval(timerRef.current);
@@ -110,12 +112,34 @@ const VideoSession = () => {
     const timeStr = now.toTimeString().slice(0, 8);
     await supabase
       .from("sessions")
-      .update({ end_time: timeStr })
+      .update({ end_time: timeStr, status: "completed" })
       .eq("id", sessionId);
 
     toast.success("Session ended");
     navigate("/dashboard");
   };
+
+  // Learner listens for teacher ending the session
+  useEffect(() => {
+    if (!sessionId || !started) return;
+
+    const channel = supabase
+      .channel(`session-end-${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
+        (payload: any) => {
+          if (payload.new?.end_time && !isTeacher) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            toast.info("The teacher has ended the session.");
+            navigate("/dashboard");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [sessionId, started, isTeacher, navigate]);
 
   useEffect(() => {
     return () => {
