@@ -13,20 +13,37 @@ const ResetPassword = () => {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [checking, setChecking] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if this is a recovery session from the URL hash
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    } else {
-      // Also listen for the auth event
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === "PASSWORD_RECOVERY") setIsRecovery(true);
-      });
-      return () => subscription.unsubscribe();
-    }
+    const checkRecovery = async () => {
+      // Check hash first (available synchronously)
+      if (window.location.hash.includes("type=recovery")) {
+        setIsRecovery(true);
+        setChecking(false);
+        return;
+      }
+      // If AuthContext already processed the hash, check for active session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsRecovery(true);
+        setChecking(false);
+        return;
+      }
+      setChecking(false);
+    };
+
+    // Listen for PASSWORD_RECOVERY event (fires if hash not yet processed)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setIsRecovery(true);
+        setChecking(false);
+      }
+    });
+
+    checkRecovery();
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +62,14 @@ const ResetPassword = () => {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen gradient-primary flex items-center justify-center p-6">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+      </div>
+    );
+  }
 
   if (!isRecovery) {
     return (
