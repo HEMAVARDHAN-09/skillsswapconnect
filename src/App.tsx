@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import ChatRoom from "./pages/ChatRoom";
 import VideoSession from "./pages/VideoSession";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/chat/:roomId" element={<ChatRoom />} />
             <Route path="/session/:sessionId/video" element={<VideoSession />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
