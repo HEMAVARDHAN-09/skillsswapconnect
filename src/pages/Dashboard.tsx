@@ -51,6 +51,19 @@ const Dashboard = () => {
     loadData();
   }, [user]);
 
+  // Realtime subscription: auto-refresh sessions when teacher accepts
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("dashboard-sessions")
+      .on("postgres_changes", { event: "*", schema: "public", table: "sessions" }, () => {
+        loadSessions();
+        loadChatRooms();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
