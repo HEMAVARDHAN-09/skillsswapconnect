@@ -366,7 +366,8 @@ const Dashboard = () => {
               <div className="space-y-3">
                 {sessions.map((s) => {
                   const isTeacher = s.teacher_id === user!.id;
-                  const otherName = sessionProfiles[isTeacher ? s.learner_id : s.teacher_id] || "Unknown";
+                  const otherUserId = isTeacher ? s.learner_id : s.teacher_id;
+                  const otherName = sessionProfiles[otherUserId] || "Unknown";
                   return (
                     <div key={s.id} className="p-4 rounded-xl bg-secondary/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
@@ -380,7 +381,7 @@ const Dashboard = () => {
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap items-center">
                         {s.status === "pending" && isTeacher && (
                           <>
                             <Button size="sm" onClick={() => updateSession(s.id, "accepted")}><Check className="h-3 w-3 mr-1" /> Accept</Button>
@@ -412,6 +413,11 @@ const Dashboard = () => {
                             <Button size="sm" variant="outline"><MessageCircle className="h-3 w-3 mr-1" /> Chat</Button>
                           </Link>
                         )}
+                        <ReportUserDialog
+                          reportedUserId={otherUserId}
+                          reportedUserName={otherName}
+                          chatRoomId={chatRoomMap[s.id]}
+                        />
                       </div>
                     </div>
                   );
