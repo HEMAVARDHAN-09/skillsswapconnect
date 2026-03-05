@@ -196,31 +196,18 @@ const ChatRoom = () => {
             <Button variant="ghost" size="icon" onClick={toggleBlock} title={isBlocked ? "Unblock" : "Block"}>
               <Ban className={`h-4 w-4 ${isBlocked ? "text-destructive" : ""}`} />
             </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" title="Report"><Flag className="h-4 w-4" /></Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" /> Report User</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <Label>Reason for reporting</Label>
-                  <Textarea
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                    placeholder="Describe the issue..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button variant="destructive" onClick={submitReport}>Submit Report</Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            {otherUser && (
+              <ReportUserDialog
+                reportedUserId={otherUser.user_id}
+                reportedUserName={otherUser.name}
+                chatRoomId={roomId}
+                trigger={
+                  <Button variant="ghost" size="icon" title="Report User">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+                  </Button>
+                }
+              />
+            )}
           </div>
         </div>
       </div>
