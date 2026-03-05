@@ -18,15 +18,15 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const checkRecovery = async () => {
-      // Check hash first (available synchronously)
-      if (window.location.hash.includes("type=recovery")) {
+      // Check sessionStorage flag set by AuthContext when PASSWORD_RECOVERY fires
+      if (sessionStorage.getItem("supabase_recovery") === "true") {
+        sessionStorage.removeItem("supabase_recovery");
         setIsRecovery(true);
         setChecking(false);
         return;
       }
-      // If AuthContext already processed the hash, check for active session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      // Check hash directly (if page just loaded with recovery link)
+      if (window.location.hash.includes("type=recovery")) {
         setIsRecovery(true);
         setChecking(false);
         return;
@@ -35,8 +35,9 @@ const ResetPassword = () => {
     };
 
     // Listen for PASSWORD_RECOVERY event (fires if hash not yet processed)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        sessionStorage.removeItem("supabase_recovery");
         setIsRecovery(true);
         setChecking(false);
       }
