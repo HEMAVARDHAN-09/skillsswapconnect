@@ -40,6 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === "PASSWORD_RECOVERY") {
+        sessionStorage.setItem("supabase_recovery", "true");
+      }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
