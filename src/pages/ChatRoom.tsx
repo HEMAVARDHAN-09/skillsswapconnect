@@ -10,11 +10,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Send, Shield, Flag, Loader2, Ban, AlertTriangle,
 } from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-  DialogFooter, DialogClose,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import ReportUserDialog from "@/components/ReportUserDialog";
 
 type Message = {
   id: string;

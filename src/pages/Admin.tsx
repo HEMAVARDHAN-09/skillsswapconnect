@@ -30,6 +30,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [newReportAlert, setNewReportAlert] = useState<{ reporter: string; reported: string } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
