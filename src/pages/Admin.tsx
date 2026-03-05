@@ -30,6 +30,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [newReportAlert, setNewReportAlert] = useState<{ reporter: string; reported: string } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -98,9 +99,35 @@ const Admin = () => {
 
   const updateReportStatus = async (id: string, status: string) => {
     await supabase.from("reports").update({ status }).eq("id", id);
-    toast.success(`Report ${status}`);
+    toast.success(`Report marked as ${status}`);
     loadAll();
   };
+
+  // Real-time: notify admin when a new report comes in
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channel = supabase
+      .channel("admin-reports-watch")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, async (payload) => {
+        const { reporter_id, reported_id, reason } = payload.new as any;
+        // Fetch names for the notification
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, name")
+          .in("user_id", [reporter_id, reported_id]);
+        const nameMap: Record<string, string> = {};
+        profs?.forEach((p) => { nameMap[p.user_id] = p.name; });
+        const reporterName = nameMap[reporter_id] || "A user";
+        const reportedName = nameMap[reported_id] || "another user";
+        toast.warning(
+          `🚨 New Report Received\n${reporterName} reported ${reportedName}: "${reason.slice(0, 60)}${reason.length > 60 ? "…" : ""}"`,
+          { duration: 8000, description: "Go to the Reports tab to review." }
+        );
+        loadAll();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
 
   // Analytics
   const popularSkill = skills.length

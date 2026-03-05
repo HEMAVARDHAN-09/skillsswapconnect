@@ -4,17 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  ArrowLeft, Send, Shield, Flag, Loader2, Ban, AlertTriangle,
-} from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-  DialogFooter, DialogClose,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { ArrowLeft, Send, Shield, Loader2, Ban } from "lucide-react";
+import ReportUserDialog from "@/components/ReportUserDialog";
 
 type Message = {
   id: string;
@@ -34,7 +26,6 @@ const ChatRoom = () => {
   const [skillName, setSkillName] = useState("");
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [reportReason, setReportReason] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,18 +133,6 @@ const ChatRoom = () => {
     }
   };
 
-  const submitReport = async () => {
-    if (!reportReason.trim() || !otherUser) return;
-    await supabase.from("reports").insert({
-      reporter_id: user!.id,
-      reported_id: otherUser.user_id,
-      reason: reportReason.trim(),
-      chat_room_id: roomId,
-    });
-    toast.success("Report submitted. Admin will review it.");
-    setReportReason("");
-  };
-
   const formatTime = (ts: string) => {
     const d = new Date(ts);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -204,31 +183,18 @@ const ChatRoom = () => {
             <Button variant="ghost" size="icon" onClick={toggleBlock} title={isBlocked ? "Unblock" : "Block"}>
               <Ban className={`h-4 w-4 ${isBlocked ? "text-destructive" : ""}`} />
             </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" title="Report"><Flag className="h-4 w-4" /></Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" /> Report User</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <Label>Reason for reporting</Label>
-                  <Textarea
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                    placeholder="Describe the issue..."
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button variant="destructive" onClick={submitReport}>Submit Report</Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            {otherUser && (
+              <ReportUserDialog
+                reportedUserId={otherUser.user_id}
+                reportedUserName={otherUser.name}
+                chatRoomId={roomId}
+                trigger={
+                  <Button variant="ghost" size="icon" title="Report User">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+                  </Button>
+                }
+              />
+            )}
           </div>
         </div>
       </div>
