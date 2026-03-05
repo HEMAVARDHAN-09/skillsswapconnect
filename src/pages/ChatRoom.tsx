@@ -133,18 +133,6 @@ const ChatRoom = () => {
     }
   };
 
-  const submitReport = async () => {
-    if (!reportReason.trim() || !otherUser) return;
-    await supabase.from("reports").insert({
-      reporter_id: user!.id,
-      reported_id: otherUser.user_id,
-      reason: reportReason.trim(),
-      chat_room_id: roomId,
-    });
-    toast.success("Report submitted. Admin will review it.");
-    setReportReason("");
-  };
-
   const formatTime = (ts: string) => {
     const d = new Date(ts);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
