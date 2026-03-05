@@ -4,12 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import {
-  ArrowLeft, Send, Shield, Flag, Loader2, Ban, AlertTriangle,
-} from "lucide-react";
+import { ArrowLeft, Send, Shield, Loader2, Ban } from "lucide-react";
 import ReportUserDialog from "@/components/ReportUserDialog";
 
 type Message = {
