@@ -17,24 +17,43 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkRecovery = async () => {
-      // Check sessionStorage flag set by AuthContext when PASSWORD_RECOVERY fires
+    const handleRecovery = async () => {
+      // PKCE flow: Supabase redirects with ?code=... query param
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+
+      if (code) {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          setIsRecovery(true);
+        } catch (err: any) {
+          toast.error("Reset link is invalid or has expired. Please request a new one.");
+          setIsRecovery(false);
+        }
+        setChecking(false);
+        return;
+      }
+
+      // Legacy implicit flow: check hash fragment
+      if (window.location.hash.includes("type=recovery")) {
+        setIsRecovery(true);
+        setChecking(false);
+        return;
+      }
+
+      // Check sessionStorage flag set by AuthContext PASSWORD_RECOVERY event
       if (sessionStorage.getItem("supabase_recovery") === "true") {
         sessionStorage.removeItem("supabase_recovery");
         setIsRecovery(true);
         setChecking(false);
         return;
       }
-      // Check hash directly (if page just loaded with recovery link)
-      if (window.location.hash.includes("type=recovery")) {
-        setIsRecovery(true);
-        setChecking(false);
-        return;
-      }
+
       setChecking(false);
     };
 
-    // Listen for PASSWORD_RECOVERY event (fires if hash not yet processed)
+    // Also listen for PASSWORD_RECOVERY event (legacy implicit flow)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         sessionStorage.removeItem("supabase_recovery");
@@ -43,7 +62,7 @@ const ResetPassword = () => {
       }
     });
 
-    checkRecovery();
+    handleRecovery();
     return () => subscription.unsubscribe();
   }, []);
 
@@ -56,6 +75,7 @@ const ResetPassword = () => {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       toast.success("Password updated! Please sign in.");
+      await supabase.auth.signOut();
       navigate("/login");
     } catch (err: any) {
       toast.error(err.message || "Failed to update password");
@@ -81,10 +101,16 @@ const ResetPassword = () => {
             <CardTitle className="text-2xl">Invalid Link</CardTitle>
             <CardDescription>This password reset link is invalid or has expired.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <Button asChild className="w-full gradient-primary">
               <Link to="/login">Back to Login</Link>
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              Need a new link?{" "}
+              <Link to="/login" className="text-primary font-medium hover:underline">
+                Request password reset
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>
