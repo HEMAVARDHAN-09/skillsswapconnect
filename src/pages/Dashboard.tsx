@@ -335,12 +335,15 @@ const Dashboard = () => {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {matches.map((m, i) => (
                   <div key={i} className="p-4 rounded-xl bg-secondary/50 hover-lift">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-sm font-bold text-primary-foreground">{m.name.charAt(0)}</div>
-                      <div>
-                        <p className="font-medium">{m.name}</p>
-                        <p className="text-xs text-muted-foreground">teaches {m.skill_name}</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-sm font-bold text-primary-foreground">{m.name.charAt(0)}</div>
+                        <div>
+                          <p className="font-medium">{m.name}</p>
+                          <p className="text-xs text-muted-foreground">teaches {m.skill_name}</p>
+                        </div>
                       </div>
+                      <ReportUserDialog reportedUserId={m.user_id} reportedUserName={m.name} />
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">{m.level} · {m.mode}</p>
                     <Button size="sm" className="w-full gradient-primary" onClick={() => openScheduleDialog(m)}>
