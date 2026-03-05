@@ -26,8 +26,6 @@ const ChatRoom = () => {
   const [skillName, setSkillName] = useState("");
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user || !roomId) { navigate("/dashboard"); return; }
