@@ -11,12 +11,21 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Users, BookOpen, Calendar, Trash2, BarChart3, Loader2,
   Flag, CheckCircle, Search, Shield, AlertTriangle, UserX, MessageSquare,
-  Bell,
+  Bell, Ban, ShieldOff,
 } from "lucide-react";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogFooter, DialogClose,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -37,6 +46,12 @@ const Admin = () => {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [userBans, setUserBans] = useState<any[]>([]);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
+  const [banTarget, setBanTarget] = useState<{ userId: string; userName: string; reportId: string } | null>(null);
+  const [banReason, setBanReason] = useState("");
+  const [banType, setBanType] = useState("ban");
+  const [banSubmitting, setBanSubmitting] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -46,13 +61,14 @@ const Admin = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: u }, { data: sk }, { data: se }, { data: rp }, { data: cr }, { data: notifs }] = await Promise.all([
+    const [{ data: u }, { data: sk }, { data: se }, { data: rp }, { data: cr }, { data: notifs }, { data: bans }] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("skills").select("*"),
       supabase.from("sessions").select("*").order("created_at", { ascending: false }),
       supabase.from("reports").select("*").order("created_at", { ascending: false }),
       supabase.from("chat_rooms").select("*"),
       supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("user_bans").select("*"),
     ]);
     setUsers(u || []);
     setSkills(sk || []);
@@ -60,6 +76,7 @@ const Admin = () => {
     setReports(rp || []);
     setChatRooms(cr || []);
     setNotifications(notifs || []);
+    setUserBans(bans || []);
     if (rp?.length) {
       const ids = [...new Set(rp.flatMap((r: any) => [r.reporter_id, r.reported_id]))];
       const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
@@ -110,6 +127,42 @@ const Admin = () => {
     toast.success(`Report marked as ${status}`);
     loadAll();
   };
+
+  const openBanDialog = (userId: string, userName: string, reportId: string) => {
+    setBanTarget({ userId, userName, reportId });
+    setBanReason("");
+    setBanType("ban");
+    setBanDialogOpen(true);
+  };
+
+  const handleBanUser = async () => {
+    if (!banTarget || !banReason.trim() || !user) return;
+    setBanSubmitting(true);
+    const { error } = await supabase.from("user_bans").insert({
+      user_id: banTarget.userId,
+      banned_by: user.id,
+      reason: banReason.trim(),
+      ban_type: banType,
+    } as any);
+    if (error) {
+      toast.error("Failed to ban user");
+    } else {
+      await updateReportStatus(banTarget.reportId, "reviewed");
+      toast.success(`User ${banType === "ban" ? "banned" : "suspended"} successfully`);
+      setBanDialogOpen(false);
+      loadAll();
+    }
+    setBanSubmitting(false);
+  };
+
+  const unbanUser = async (banId: string) => {
+    await supabase.from("user_bans").delete().eq("id", banId);
+    toast.success("User unbanned");
+    loadAll();
+  };
+
+  const isUserBanned = (userId: string) => userBans.some((b: any) => b.user_id === userId);
+  const getUserBan = (userId: string) => userBans.find((b: any) => b.user_id === userId);
 
   // Real-time: notify admin when a new report comes in
   useEffect(() => {
@@ -477,7 +530,7 @@ const Admin = () => {
                             </span>
                           </TableCell>
                           <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
-                          <TableCell className="flex gap-1">
+                          <TableCell className="flex gap-1 flex-wrap">
                             {r.status === "pending" && (
                               <>
                                 <Button size="sm" variant="outline" onClick={() => updateReportStatus(r.id, "reviewed")}>
@@ -487,6 +540,15 @@ const Admin = () => {
                                   Dismiss
                                 </Button>
                               </>
+                            )}
+                            {isUserBanned(r.reported_id) ? (
+                              <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => { const ban = getUserBan(r.reported_id); if (ban) unbanUser(ban.id); }}>
+                                <ShieldOff className="h-3 w-3 mr-1" /> Unban
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="destructive" onClick={() => openBanDialog(r.reported_id, reportProfiles[r.reported_id] || "Unknown", r.id)}>
+                                <Ban className="h-3 w-3 mr-1" /> Ban
+                              </Button>
                             )}
                           </TableCell>
                         </TableRow>
@@ -553,6 +615,49 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
+      {/* Ban Dialog */}
+      <Dialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-destructive" />
+              Ban / Suspend {banTarget?.userName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-1">
+            <div className="space-y-2">
+              <Label>Action Type</Label>
+              <Select value={banType} onValueChange={setBanType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ban">Permanent Ban</SelectItem>
+                  <SelectItem value="suspend">Temporary Suspension</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reason <span className="text-destructive">*</span></Label>
+              <Textarea
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                placeholder="Explain why this user is being banned..."
+                className="min-h-[90px] resize-none"
+                maxLength={500}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleBanUser} disabled={banSubmitting || !banReason.trim()}>
+              {banSubmitting ? "Processing…" : banType === "ban" ? "Ban User" : "Suspend User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
