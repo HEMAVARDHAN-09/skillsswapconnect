@@ -79,8 +79,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    // Check if user is banned
+    if (data.user) {
+      const { data: bans } = await supabase.from("user_bans").select("ban_type, reason").eq("user_id", data.user.id);
+      if (bans && bans.length > 0) {
+        await supabase.auth.signOut();
+        throw new Error(`Your account has been ${(bans[0] as any).ban_type === "ban" ? "banned" : "suspended"}: ${(bans[0] as any).reason}`);
+      }
+    }
   };
 
   const signOut = async () => {
