@@ -11,7 +11,12 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Users, BookOpen, Calendar, Trash2, BarChart3, Loader2,
   Flag, CheckCircle, Search, Shield, AlertTriangle, UserX, MessageSquare,
+  Bell,
 } from "lucide-react";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -30,7 +35,8 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
-  const [newReportAlert, setNewReportAlert] = useState<{ reporter: string; reported: string } | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -40,18 +46,20 @@ const Admin = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: u }, { data: sk }, { data: se }, { data: rp }, { data: cr }] = await Promise.all([
+    const [{ data: u }, { data: sk }, { data: se }, { data: rp }, { data: cr }, { data: notifs }] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("skills").select("*"),
       supabase.from("sessions").select("*").order("created_at", { ascending: false }),
       supabase.from("reports").select("*").order("created_at", { ascending: false }),
       supabase.from("chat_rooms").select("*"),
+      supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50),
     ]);
     setUsers(u || []);
     setSkills(sk || []);
     setSessions(se || []);
     setReports(rp || []);
     setChatRooms(cr || []);
+    setNotifications(notifs || []);
     if (rp?.length) {
       const ids = [...new Set(rp.flatMap((r: any) => [r.reporter_id, r.reported_id]))];
       const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
@@ -107,27 +115,34 @@ const Admin = () => {
   useEffect(() => {
     if (!isAdmin) return;
     const channel = supabase
-      .channel("admin-reports-watch")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, async (payload) => {
-        const { reporter_id, reported_id, reason } = payload.new as any;
-        // Fetch names for the notification
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, name")
-          .in("user_id", [reporter_id, reported_id]);
-        const nameMap: Record<string, string> = {};
-        profs?.forEach((p) => { nameMap[p.user_id] = p.name; });
-        const reporterName = nameMap[reporter_id] || "A user";
-        const reportedName = nameMap[reported_id] || "another user";
-        toast.warning(
-          `🚨 New Report Received\n${reporterName} reported ${reportedName}: "${reason.slice(0, 60)}${reason.length > 60 ? "…" : ""}"`,
-          { duration: 8000, description: "Go to the Reports tab to review." }
-        );
-        loadAll();
+      .channel("admin-notifications-watch")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (payload) => {
+        const notif = payload.new as any;
+        if (notif.user_id === user?.id) {
+          setNotifications((prev) => [notif, ...prev]);
+          toast.warning(notif.title, {
+            description: notif.message.slice(0, 80),
+            duration: 8000,
+          });
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [isAdmin]);
+  }, [isAdmin, user?.id]);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  const markAsRead = async (id: string) => {
+    await supabase.from("notifications").update({ is_read: true } as any).eq("id", id);
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
+  };
+
+  const markAllRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
+    if (!unreadIds.length) return;
+    await supabase.from("notifications").update({ is_read: true } as any).in("id", unreadIds);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  };
 
   // Analytics
   const popularSkill = skills.length
@@ -160,7 +175,48 @@ const Admin = () => {
             <Shield className="h-5 w-5 text-primary" />
             <span className="text-xl font-bold gradient-text">SkillSwap Admin</span>
           </div>
-          <Link to="/dashboard"><Button variant="ghost"><ArrowLeft className="mr-1 h-4 w-4" /> Dashboard</Button></Link>
+          <div className="flex items-center gap-2">
+            <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <h4 className="font-semibold text-sm">Notifications</h4>
+                  {unreadCount > 0 && (
+                    <Button variant="ghost" size="sm" className="text-xs h-auto py-1" onClick={markAllRead}>
+                      Mark all read
+                    </Button>
+                  )}
+                </div>
+                <ScrollArea className="max-h-[300px]">
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">No notifications</p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`px-4 py-3 border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors ${!n.is_read ? "bg-primary/5" : ""}`}
+                        onClick={() => { markAsRead(n.id); setNotifOpen(false); }}
+                      >
+                        <p className="text-sm font-medium">{n.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                      </div>
+                    ))
+                  )}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+            <Link to="/dashboard"><Button variant="ghost"><ArrowLeft className="mr-1 h-4 w-4" /> Dashboard</Button></Link>
+          </div>
         </div>
       </nav>
 
