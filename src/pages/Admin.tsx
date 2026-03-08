@@ -590,7 +590,7 @@ const Admin = () => {
                         <TableRow key={ban.id}>
                           <TableCell className="font-medium">{getUserName(ban.user_id)}</TableCell>
                           <TableCell>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ban.ban_type === "ban" ? "bg-destructive/10 text-destructive" : "bg-yellow-500/10 text-yellow-600"}`}>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ban.ban_type === "ban" ? "bg-destructive/10 text-destructive" : "bg-accent text-accent-foreground"}`}>
                               {ban.ban_type === "ban" ? "Banned" : "Suspended"}
                             </span>
                           </TableCell>
