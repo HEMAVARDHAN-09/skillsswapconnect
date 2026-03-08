@@ -296,12 +296,15 @@ const Admin = () => {
 
         {/* Main Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="reports">
               Reports {pendingReports > 0 && <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full px-1.5">{pendingReports}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="bans">
+              Bans {userBans.length > 0 && <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full px-1.5">{userBans.length}</span>}
             </TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -550,6 +553,54 @@ const Admin = () => {
                                 <Ban className="h-3 w-3 mr-1" /> Ban
                               </Button>
                             )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* BANNED USERS TAB */}
+          <TabsContent value="bans">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Ban className="h-5 w-5 text-destructive" /> Banned Users</CardTitle>
+                <CardDescription>View and manage all currently banned or suspended users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {userBans.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No banned users</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>Banned By</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {userBans.map((ban: any) => (
+                        <TableRow key={ban.id}>
+                          <TableCell className="font-medium">{getUserName(ban.user_id)}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ban.ban_type === "ban" ? "bg-destructive/10 text-destructive" : "bg-accent text-accent-foreground"}`}>
+                              {ban.ban_type === "ban" ? "Banned" : "Suspended"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="max-w-[250px] truncate text-muted-foreground">{ban.reason}</TableCell>
+                          <TableCell>{getUserName(ban.banned_by)}</TableCell>
+                          <TableCell>{new Date(ban.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="outline" onClick={() => unbanUser(ban.id)}>
+                              <ShieldOff className="h-3 w-3 mr-1" /> Unban
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
