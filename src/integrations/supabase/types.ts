@@ -341,6 +341,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_session_update: {
+        Args: {
+          _new_learner_id: string
+          _new_status: string
+          _new_teacher_id: string
+          _old_learner_id: string
+          _old_status: string
+          _old_teacher_id: string
+          _session_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
