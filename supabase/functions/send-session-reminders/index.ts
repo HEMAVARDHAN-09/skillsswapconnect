@@ -13,7 +13,6 @@ function buildGoogleCalendarUrl(
   endTime: string,
   meetingType: string
 ) {
-  // dateStr = "2026-03-01", startTime/endTime = "14:00"
   const start = `${dateStr.replace(/-/g, "")}T${startTime.replace(":", "")}00`;
   const end = `${dateStr.replace(/-/g, "")}T${endTime.replace(":", "")}00`;
   const details = meetingType === "online" ? "Online session" : "In-person session";
@@ -32,8 +31,42 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Authenticate: require the service role key or anon key as Bearer token
+    const authHeader = req.headers.get("Authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Only allow calls authenticated with the service role key or anon key (from pg_cron/scheduler)
+    const token = authHeader?.replace("Bearer ", "");
+    if (token !== serviceRoleKey && token !== anonKey) {
+      // If a user JWT is provided, verify they are an admin
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const callerClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader! } },
+      });
+      const { data: { user: caller } } = await callerClient.auth.getUser();
+      if (!caller) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const adminClient = createClient(supabaseUrl, serviceRoleKey);
+      const { data: isAdmin } = await adminClient.rpc("has_role", { _user_id: caller.id, _role: "admin" });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Find sessions happening in ~1 hour that haven't been reminded
@@ -54,7 +87,7 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error("Query error:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ error: "Internal error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -69,7 +102,6 @@ Deno.serve(async (req) => {
     let sentCount = 0;
 
     for (const session of sessions) {
-      // Get participant profiles
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, name, email")
@@ -88,15 +120,12 @@ Deno.serve(async (req) => {
         session.meeting_type
       );
 
-      // Log reminder (in production, integrate with an email provider)
       console.log(`📧 Reminder for session ${session.id}:`);
-      console.log(`  Teacher: ${teacher?.name} (${teacher?.email})`);
-      console.log(`  Learner: ${learner?.name} (${learner?.email})`);
+      console.log(`  Teacher: ${teacher?.name}`);
+      console.log(`  Learner: ${learner?.name}`);
       console.log(`  Skill: ${session.skill_name}`);
       console.log(`  Time: ${session.start_time} - ${session.end_time}`);
-      console.log(`  Google Calendar: ${calendarUrl}`);
 
-      // Mark as reminded
       await supabase
         .from("sessions")
         .update({ reminder_sent: true })
@@ -111,7 +140,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: String(err) }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
