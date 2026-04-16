@@ -40,6 +40,8 @@ const Admin = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [chatRooms, setChatRooms] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
   const [reportProfiles, setReportProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
