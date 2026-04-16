@@ -672,6 +672,189 @@ const Admin = () => {
               </Card>
             </div>
           </TabsContent>
+
+          {/* MONITOR CHATS TAB */}
+          <TabsContent value="chats">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Monitor Chats</CardTitle>
+                <CardDescription>View all chat rooms and monitor conversations between users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chatRooms.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No chat rooms yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User 1</TableHead>
+                          <TableHead>User 2</TableHead>
+                          <TableHead>Messages</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {chatRooms.map((room) => {
+                          const roomMsgCount = chatMessages.filter((m) => m.chat_room_id === room.id).length;
+                          return (
+                            <TableRow key={room.id} className={selectedChatRoom === room.id ? "bg-primary/5" : ""}>
+                              <TableCell className="font-medium">{getUserName(room.user1_id)}</TableCell>
+                              <TableCell className="font-medium">{getUserName(room.user2_id)}</TableCell>
+                              <TableCell>{roomMsgCount}</TableCell>
+                              <TableCell>{new Date(room.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant={selectedChatRoom === room.id ? "default" : "outline"}
+                                  onClick={() => setSelectedChatRoom(selectedChatRoom === room.id ? null : room.id)}
+                                >
+                                  <Eye className="h-3 w-3 mr-1" /> {selectedChatRoom === room.id ? "Hide" : "View"}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+
+                    {selectedChatRoom && (
+                      <Card className="border-primary/20">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" /> Chat Messages
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ScrollArea className="max-h-[400px]">
+                            {chatMessages.filter((m) => m.chat_room_id === selectedChatRoom).length === 0 ? (
+                              <p className="text-sm text-muted-foreground text-center py-4">No messages in this chat.</p>
+                            ) : (
+                              <div className="space-y-3">
+                                {chatMessages
+                                  .filter((m) => m.chat_room_id === selectedChatRoom)
+                                  .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                  .map((msg) => (
+                                    <div key={msg.id} className="flex gap-3 p-3 rounded-lg bg-muted/30">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-sm font-semibold">{getUserName(msg.sender_id)}</span>
+                                          <span className="text-xs text-muted-foreground">{new Date(msg.created_at).toLocaleString()}</span>
+                                        </div>
+                                        <p className="text-sm">{msg.content}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </ScrollArea>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* PLATFORM DATA TAB */}
+          <TabsContent value="platform">
+            <div className="space-y-6">
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> Control Platform Data</CardTitle>
+                  <CardDescription>Overview of all platform data and quick actions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: "Total Users", value: users.length, desc: "Registered accounts" },
+                      { label: "Total Skills", value: skills.length, desc: "Teaching & learning entries" },
+                      { label: "Total Sessions", value: sessions.length, desc: "All session records" },
+                      { label: "Chat Rooms", value: chatRooms.length, desc: "Active conversations" },
+                      { label: "Chat Messages", value: chatMessages.length, desc: "Messages exchanged" },
+                      { label: "Reports Filed", value: reports.length, desc: "User reports submitted" },
+                      { label: "Active Bans", value: userBans.length, desc: "Banned/suspended users" },
+                      { label: "Pending Reports", value: pendingReports, desc: "Awaiting review" },
+                      { label: "Completed Sessions", value: sessions.filter((s) => s.status === "completed").length, desc: "Successfully finished" },
+                    ].map((item, i) => (
+                      <div key={i} className="p-4 rounded-lg border bg-card">
+                        <p className="text-sm text-muted-foreground">{item.label}</p>
+                        <p className="text-2xl font-bold mt-1">{item.value}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="text-base">Session Status Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {["pending", "accepted", "confirmed", "completed", "rejected"].map((status) => {
+                      const count = sessions.filter((s) => s.status === status).length;
+                      return (
+                        <div key={status} className="text-center p-3 rounded-lg border bg-card">
+                          <p className="text-lg font-bold">{count}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{status}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="text-base">Skill Distribution by Level</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-3">
+                    {["Beginner", "Intermediate", "Advanced"].map((level) => {
+                      const count = skills.filter((s) => s.level === level).length;
+                      return (
+                        <div key={level} className="text-center p-3 rounded-lg border bg-card">
+                          <p className="text-lg font-bold">{count}</p>
+                          <p className="text-xs text-muted-foreground">{level}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="text-base">Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {sessions.slice(0, 10).map((s) => (
+                      <div key={s.id} className="flex items-center justify-between p-2 rounded border bg-card text-sm">
+                        <div>
+                          <span className="font-medium">{s.skill_name}</span>
+                          <span className="text-muted-foreground ml-2">{getUserName(s.teacher_id)} → {getUserName(s.learner_id)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            s.status === "completed" ? "bg-green-100 text-green-800" :
+                            s.status === "accepted" || s.status === "confirmed" ? "bg-blue-100 text-blue-800" :
+                            s.status === "rejected" ? "bg-red-100 text-red-800" :
+                            "bg-yellow-100 text-yellow-800"
+                          }`}>{s.status}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
       {/* Ban Dialog */}
