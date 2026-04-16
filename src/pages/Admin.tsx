@@ -63,7 +63,7 @@ const Admin = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: u }, { data: sk }, { data: se }, { data: rp }, { data: cr }, { data: notifs }, { data: bans }] = await Promise.all([
+    const [{ data: u }, { data: sk }, { data: se }, { data: rp }, { data: cr }, { data: notifs }, { data: bans }, { data: msgs }] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("skills").select("*"),
       supabase.from("sessions").select("*").order("created_at", { ascending: false }),
@@ -71,6 +71,7 @@ const Admin = () => {
       supabase.from("chat_rooms").select("*"),
       supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("user_bans").select("*"),
+      supabase.from("chat_messages").select("*").order("created_at", { ascending: false }).limit(500),
     ]);
     setUsers(u || []);
     setSkills(sk || []);
@@ -79,6 +80,7 @@ const Admin = () => {
     setChatRooms(cr || []);
     setNotifications(notifs || []);
     setUserBans(bans || []);
+    setChatMessages(msgs || []);
     if (rp?.length) {
       const ids = [...new Set(rp.flatMap((r: any) => [r.reporter_id, r.reported_id]))];
       const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
