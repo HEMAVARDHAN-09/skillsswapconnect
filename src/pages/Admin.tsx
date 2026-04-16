@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Users, BookOpen, Calendar, Trash2, BarChart3, Loader2,
   Flag, CheckCircle, Search, Shield, AlertTriangle, UserX, MessageSquare,
-  Bell, Ban, ShieldOff,
+  Bell, Ban, ShieldOff, Database, Eye, Download,
 } from "lucide-react";
 import {
   Popover, PopoverContent, PopoverTrigger,
