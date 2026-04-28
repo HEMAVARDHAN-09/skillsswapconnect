@@ -56,7 +56,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("dashboard-sessions")
+      .channel(`dashboard-sessions-${user.id}`, { config: { private: true } })
       .on("postgres_changes", { event: "*", schema: "public", table: "sessions" }, () => {
         loadSessions();
         loadChatRooms();
