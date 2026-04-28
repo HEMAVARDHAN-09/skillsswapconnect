@@ -72,8 +72,7 @@ const ChatRoom = () => {
 
     // Load the other user
     const otherId = room.user1_id === user!.id ? room.user2_id : room.user1_id;
-    const { data: profile } = await supabase
-      .rpc("get_public_profiles" as any, { _user_ids: [otherId] } as any);
+    const { data: profile } = await (supabase as any).rpc("get_public_profiles", { _user_ids: [otherId] });
     setOtherUser((profile as any)?.[0] || null);
 
     // Get session skill name
