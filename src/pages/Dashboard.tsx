@@ -88,7 +88,7 @@ const Dashboard = () => {
     const { data: teacherSkills } = await supabase.from("skills").select("user_id, skill_name, level, mode").eq("type", "Teach").in("skill_name", learnNames).neq("user_id", user.id);
     if (!teacherSkills?.length) { setMatches([]); return; }
     const uids = [...new Set(teacherSkills.map((s) => s.user_id))];
-    const { data: profiles } = await supabase.from("profiles").select("user_id, name").in("user_id", uids);
+    const { data: profiles } = await (supabase as any).rpc("get_public_profiles", { _user_ids: uids });
     const nameMap: Record<string, string> = {};
     profiles?.forEach((p) => (nameMap[p.user_id] = p.name));
     setMatches(teacherSkills.map((s) => ({ ...s, name: nameMap[s.user_id] || "Unknown" })));
@@ -101,7 +101,7 @@ const Dashboard = () => {
     // Load profiles for session participants
     if (data?.length) {
       const ids = [...new Set(data.flatMap((s) => [s.teacher_id, s.learner_id]))];
-      const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
+      const { data: profs } = await (supabase as any).rpc("get_public_profiles", { _user_ids: ids });
       const map: Record<string, string> = {};
       profs?.forEach((p) => (map[p.user_id] = p.name));
       setSessionProfiles(map);
@@ -117,16 +117,8 @@ const Dashboard = () => {
   };
 
   const loadLeaderboard = async () => {
-    const { data: profiles } = await supabase.from("profiles").select("user_id, name, credits").order("credits", { ascending: false }).limit(5);
-    if (!profiles) return;
-    // Get avg ratings
-    const entries: LeaderboardEntry[] = [];
-    for (const p of profiles) {
-      const { data: rated } = await supabase.from("sessions").select("rating").eq("teacher_id", p.user_id).not("rating", "is", null);
-      const avg = rated?.length ? rated.reduce((a, b) => a + (b.rating || 0), 0) / rated.length : 0;
-      entries.push({ ...p, avg_rating: Math.round(avg * 10) / 10 });
-    }
-    setLeaderboard(entries);
+    const { data: profiles } = await (supabase as any).rpc("get_leaderboard", { _limit: 5 });
+    setLeaderboard((profiles || []).map((p: any) => ({ ...p, avg_rating: Number(p.avg_rating) || 0 })));
   };
 
   const addSkill = async () => {
