@@ -124,7 +124,7 @@ const VideoSession = () => {
     if (!sessionId || !started) return;
 
     const channel = supabase
-      .channel(`session-end-${sessionId}`)
+      .channel(`session-end-${sessionId}`, { config: { private: true } })
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
