@@ -37,7 +37,7 @@ const ChatRoom = () => {
   useEffect(() => {
     if (!roomId) return;
     const channel = supabase
-      .channel(`chat-${roomId}`)
+      .channel(`chat-${roomId}`, { config: { private: true } })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages", filter: `chat_room_id=eq.${roomId}` },
@@ -73,11 +73,8 @@ const ChatRoom = () => {
     // Load the other user
     const otherId = room.user1_id === user!.id ? room.user2_id : room.user1_id;
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_id, name")
-      .eq("user_id", otherId)
-      .single();
-    setOtherUser(profile);
+      .rpc("get_public_profiles" as any, { _user_ids: [otherId] } as any);
+    setOtherUser((profile as any)?.[0] || null);
 
     // Get session skill name
     const { data: session } = await supabase
