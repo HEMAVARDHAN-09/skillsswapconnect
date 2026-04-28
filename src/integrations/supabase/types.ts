@@ -334,6 +334,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_session: { Args: { _session_id: string }; Returns: undefined }
       get_leaderboard: {
         Args: { _limit?: number }
         Returns: {
