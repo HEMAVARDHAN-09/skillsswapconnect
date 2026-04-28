@@ -164,7 +164,9 @@ const Dashboard = () => {
   };
 
   const updateSession = async (sessionId: string, status: string) => {
-    const { error } = await supabase.from("sessions").update({ status }).eq("id", sessionId);
+    const { error } = status === "completed"
+      ? await (supabase as any).rpc("complete_session", { _session_id: sessionId })
+      : await supabase.from("sessions").update({ status }).eq("id", sessionId);
     if (error) { toast.error(error.message); return; }
     if (status === "accepted") {
       // Auto-create chat room
@@ -178,15 +180,6 @@ const Dashboard = () => {
         if (chatErr && !chatErr.message.includes("duplicate")) {
           console.error("Chat room creation error:", chatErr);
         }
-      }
-    }
-    if (status === "completed") {
-      const session = sessions.find((s) => s.id === sessionId);
-      if (session) {
-        const { data: teacherProfile } = await supabase.from("profiles").select("credits").eq("user_id", session.teacher_id).single();
-        const { data: learnerProfile } = await supabase.from("profiles").select("credits").eq("user_id", session.learner_id).single();
-        if (teacherProfile) await supabase.from("profiles").update({ credits: teacherProfile.credits + 1 }).eq("user_id", session.teacher_id);
-        if (learnerProfile) await supabase.from("profiles").update({ credits: Math.max(0, learnerProfile.credits - 1) }).eq("user_id", session.learner_id);
       }
     }
     toast.success(`Session ${status}!`);
