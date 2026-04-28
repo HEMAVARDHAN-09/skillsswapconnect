@@ -56,7 +56,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("dashboard-sessions")
+      .channel(`dashboard-sessions-${user.id}`, { config: { private: true } })
       .on("postgres_changes", { event: "*", schema: "public", table: "sessions" }, () => {
         loadSessions();
         loadChatRooms();
@@ -88,7 +88,7 @@ const Dashboard = () => {
     const { data: teacherSkills } = await supabase.from("skills").select("user_id, skill_name, level, mode").eq("type", "Teach").in("skill_name", learnNames).neq("user_id", user.id);
     if (!teacherSkills?.length) { setMatches([]); return; }
     const uids = [...new Set(teacherSkills.map((s) => s.user_id))];
-    const { data: profiles } = await supabase.from("profiles").select("user_id, name").in("user_id", uids);
+    const { data: profiles } = await (supabase as any).rpc("get_public_profiles", { _user_ids: uids });
     const nameMap: Record<string, string> = {};
     profiles?.forEach((p) => (nameMap[p.user_id] = p.name));
     setMatches(teacherSkills.map((s) => ({ ...s, name: nameMap[s.user_id] || "Unknown" })));
@@ -101,7 +101,7 @@ const Dashboard = () => {
     // Load profiles for session participants
     if (data?.length) {
       const ids = [...new Set(data.flatMap((s) => [s.teacher_id, s.learner_id]))];
-      const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
+      const { data: profs } = await (supabase as any).rpc("get_public_profiles", { _user_ids: ids });
       const map: Record<string, string> = {};
       profs?.forEach((p) => (map[p.user_id] = p.name));
       setSessionProfiles(map);
@@ -117,16 +117,8 @@ const Dashboard = () => {
   };
 
   const loadLeaderboard = async () => {
-    const { data: profiles } = await supabase.from("profiles").select("user_id, name, credits").order("credits", { ascending: false }).limit(5);
-    if (!profiles) return;
-    // Get avg ratings
-    const entries: LeaderboardEntry[] = [];
-    for (const p of profiles) {
-      const { data: rated } = await supabase.from("sessions").select("rating").eq("teacher_id", p.user_id).not("rating", "is", null);
-      const avg = rated?.length ? rated.reduce((a, b) => a + (b.rating || 0), 0) / rated.length : 0;
-      entries.push({ ...p, avg_rating: Math.round(avg * 10) / 10 });
-    }
-    setLeaderboard(entries);
+    const { data: profiles } = await (supabase as any).rpc("get_leaderboard", { _limit: 5 });
+    setLeaderboard((profiles || []).map((p: any) => ({ ...p, avg_rating: Number(p.avg_rating) || 0 })));
   };
 
   const addSkill = async () => {
@@ -172,7 +164,9 @@ const Dashboard = () => {
   };
 
   const updateSession = async (sessionId: string, status: string) => {
-    const { error } = await supabase.from("sessions").update({ status }).eq("id", sessionId);
+    const { error } = status === "completed"
+      ? await (supabase as any).rpc("complete_session", { _session_id: sessionId })
+      : await supabase.from("sessions").update({ status }).eq("id", sessionId);
     if (error) { toast.error(error.message); return; }
     if (status === "accepted") {
       // Auto-create chat room
@@ -186,15 +180,6 @@ const Dashboard = () => {
         if (chatErr && !chatErr.message.includes("duplicate")) {
           console.error("Chat room creation error:", chatErr);
         }
-      }
-    }
-    if (status === "completed") {
-      const session = sessions.find((s) => s.id === sessionId);
-      if (session) {
-        const { data: teacherProfile } = await supabase.from("profiles").select("credits").eq("user_id", session.teacher_id).single();
-        const { data: learnerProfile } = await supabase.from("profiles").select("credits").eq("user_id", session.learner_id).single();
-        if (teacherProfile) await supabase.from("profiles").update({ credits: teacherProfile.credits + 1 }).eq("user_id", session.teacher_id);
-        if (learnerProfile) await supabase.from("profiles").update({ credits: Math.max(0, learnerProfile.credits - 1) }).eq("user_id", session.learner_id);
       }
     }
     toast.success(`Session ${status}!`);

@@ -83,7 +83,7 @@ const Admin = () => {
     setChatMessages(msgs || []);
     if (rp?.length) {
       const ids = [...new Set(rp.flatMap((r: any) => [r.reporter_id, r.reported_id]))];
-      const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
+      const { data: profs } = await (supabase as any).rpc("get_public_profiles", { _user_ids: ids });
       const map: Record<string, string> = {};
       profs?.forEach((p) => { map[p.user_id] = p.name; });
       setReportProfiles(map);
@@ -172,7 +172,7 @@ const Admin = () => {
   useEffect(() => {
     if (!isAdmin) return;
     const channel = supabase
-      .channel("admin-notifications-watch")
+      .channel(`admin-notifications-watch-${user?.id}`, { config: { private: true } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (payload) => {
         const notif = payload.new as any;
         if (notif.user_id === user?.id) {
