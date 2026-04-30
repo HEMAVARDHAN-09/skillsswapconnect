@@ -344,6 +344,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          credits: number
+          email: string
+          name: string
+          user_id: string
+        }[]
+      }
       get_public_profiles: {
         Args: { _user_ids: string[] }
         Returns: {
