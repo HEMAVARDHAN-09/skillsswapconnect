@@ -22,8 +22,8 @@ const Register = () => {
     setLoading(true);
     try {
       await signUp(email, password, name);
-      toast.success("Account created! You can now log in.");
-      navigate("/dashboard");
+      toast.success("Account created! Check your email to confirm before logging in.");
+      navigate("/login");
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
     } finally {
