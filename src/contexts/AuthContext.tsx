@@ -26,8 +26,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from("profiles").select("*").eq("user_id", userId).single();
-    if (data) setProfile(data);
+    const { data } = await (supabase as any).rpc("get_my_profile");
+    const ownProfile = Array.isArray(data) ? data[0] : data;
+    if (ownProfile) setProfile({ ...ownProfile, user_id: userId });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     setIsAdmin(roles?.some((r) => r.role === "admin") ?? false);
   };
