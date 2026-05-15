@@ -105,12 +105,14 @@ const Login = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-primary flex items-center justify-center p-6">
+    <main className="min-h-screen gradient-primary flex items-center justify-center p-6">
+      <SEO title="Login — SkillSwap" description="Sign in to your SkillSwap account to teach skills, find learners, and exchange credits." path="/login" />
+      <h1 className="sr-only">Login to SkillSwap</h1>
       <Card className="w-full max-w-md glass-card border-0">
         <CardHeader className="text-center">
           <Link to="/" className="text-2xl font-bold gradient-text mb-2 inline-block">SkillSwap</Link>
@@ -142,7 +144,7 @@ const Login = () => {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 };
 
