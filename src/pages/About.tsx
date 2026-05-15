@@ -79,6 +79,7 @@ const About = () => {
           ))}
         </div>
       </section>
+      </main>
 
       <footer className="py-10 px-6 border-t text-center text-muted-foreground">
         <p className="font-bold gradient-text text-lg mb-2">SkillSwap</p>
