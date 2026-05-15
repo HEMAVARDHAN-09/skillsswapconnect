@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Heart, Target, Lightbulb, Wrench, TestTube } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const steps = [
   {
@@ -39,12 +40,19 @@ const steps = [
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About SkillSwap — Our Design Thinking Process"
+        description="Learn how SkillSwap was built using the Design Thinking framework: empathize, define, ideate, prototype, and test."
+        path="/about"
+      />
       <nav className="glass-card border-b sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <Link to="/" className="text-xl font-bold gradient-text">SkillSwap</Link>
           <Link to="/"><Button variant="ghost"><ArrowLeft className="mr-1 h-4 w-4" /> Back</Button></Link>
         </div>
       </nav>
+
+      <main>
 
       <section className="py-16 px-6 gradient-primary text-primary-foreground text-center">
         <div className="container mx-auto">
@@ -61,7 +69,7 @@ const About = () => {
                 <div className={`bg-gradient-to-br ${step.color} p-8 flex flex-col items-center justify-center md:w-48 text-white`}>
                   <step.icon className="h-10 w-10 mb-2" />
                   <span className="text-xs uppercase tracking-wider opacity-80">Step {i + 1}</span>
-                  <h3 className="text-xl font-bold">{step.title}</h3>
+                  <h2 className="text-xl font-bold">{step.title}</h2>
                 </div>
                 <CardContent className="flex-1 p-8 flex items-center">
                   <p className="text-muted-foreground leading-relaxed">{step.content}</p>
