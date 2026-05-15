@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Shield, Loader2, Ban } from "lucide-react";
 import ReportUserDialog from "@/components/ReportUserDialog";
+import SEO from "@/components/SEO";
 
 type Message = {
   id: string;
@@ -158,12 +159,14 @@ const ChatRoom = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO title={`Chat with ${otherUser?.name || "peer"} — SkillSwap`} description="Private chat between SkillSwap session participants." path={`/chat/${roomId}`} />
+      <h1 className="sr-only">Chat with {otherUser?.name || "peer"}</h1>
       {/* Header */}
       <div className="glass-card border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/dashboard">
-              <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Back to dashboard"><ArrowLeft className="h-5 w-5" /></Button>
             </Link>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 gradient-primary rounded-full flex items-center justify-center text-sm font-bold text-primary-foreground">
@@ -176,7 +179,7 @@ const ChatRoom = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={toggleBlock} title={isBlocked ? "Unblock" : "Block"}>
+            <Button variant="ghost" size="icon" onClick={toggleBlock} aria-label={isBlocked ? "Unblock user" : "Block user"} title={isBlocked ? "Unblock" : "Block"}>
               <Ban className={`h-4 w-4 ${isBlocked ? "text-destructive" : ""}`} />
             </Button>
             {otherUser && (
@@ -185,8 +188,8 @@ const ChatRoom = () => {
                 reportedUserName={otherUser.name}
                 chatRoomId={roomId}
                 trigger={
-                  <Button variant="ghost" size="icon" title="Report User">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+                  <Button variant="ghost" size="icon" aria-label="Report user" title="Report User">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
                   </Button>
                 }
               />
@@ -257,6 +260,7 @@ const ChatRoom = () => {
                 disabled={!newMessage.trim()}
                 className="gradient-primary rounded-full"
                 size="icon"
+                aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
               </Button>
