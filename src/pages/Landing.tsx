@@ -1,14 +1,20 @@
 import { Link } from "react-router-dom";
 import { BookOpen, Users, Award, ArrowRight, Zap, Star, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 const Landing = () => {
   return (
     <div className="min-h-screen">
+      <SEO
+        title="SkillSwap — Peer-to-Peer Skill Exchange for Students"
+        description="Trade skills with fellow students on SkillSwap. Teach what you know to earn credits, spend credits to learn — a fair campus learning economy."
+        path="/"
+      />
       {/* Navbar */}
       <nav className="fixed top-0 w-full z-50 glass-card border-b">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold gradient-text">SkillSwap</h1>
+          <span className="text-2xl font-bold gradient-text">SkillSwap</span>
           <div className="flex gap-3">
             <Link to="/login">
               <Button variant="ghost" className="font-medium">Login</Button>
@@ -20,6 +26,7 @@ const Landing = () => {
         </div>
       </nav>
 
+      <main>
       {/* Hero */}
       <section className="pt-32 pb-20 px-6 gradient-primary text-primary-foreground relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
@@ -100,6 +107,7 @@ const Landing = () => {
         </div>
       </section>
 
+      </main>
       {/* Footer */}
       <footer className="py-10 px-6 border-t">
         <div className="container mx-auto text-center text-muted-foreground">

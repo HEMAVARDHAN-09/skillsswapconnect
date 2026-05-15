@@ -13,6 +13,7 @@ import ReportUserDialog from "@/components/ReportUserDialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ScheduleSessionDialog } from "@/components/ScheduleSessionDialog";
 import { format } from "date-fns";
+import SEO from "@/components/SEO";
 
 type Skill = { id: string; user_id: string; skill_name: string; level: string; type: string; mode: string };
 type Match = { user_id: string; name: string; skill_name: string; level: string; mode: string };
@@ -207,6 +208,12 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Dashboard — SkillSwap"
+        description="Manage your skills, find skill matches, schedule sessions, and track your credits on SkillSwap."
+        path="/dashboard"
+      />
+      <h1 className="sr-only">SkillSwap dashboard</h1>
       {/* Top bar */}
       <nav className="glass-card border-b sticky top-0 z-50">
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
@@ -219,7 +226,8 @@ const Dashboard = () => {
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-8 space-y-8">
+      <main className="container mx-auto px-6 py-8 space-y-8">
+        <h2 className="sr-only">Your profile and credits</h2>
         {/* Profile + Credits */}
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="glass-card hover-lift md:col-span-2">
@@ -289,7 +297,7 @@ const Dashboard = () => {
                     <span className="font-medium">{s.skill_name}</span>
                     <span className="text-xs ml-2 text-muted-foreground">{s.level} · {s.mode}</span>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => deleteSkill(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <Button size="icon" variant="ghost" aria-label={`Remove ${s.skill_name}`} onClick={() => deleteSkill(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               ))}
             </CardContent>
@@ -303,7 +311,7 @@ const Dashboard = () => {
                     <span className="font-medium">{s.skill_name}</span>
                     <span className="text-xs ml-2 text-muted-foreground">{s.level} · {s.mode}</span>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => deleteSkill(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <Button size="icon" variant="ghost" aria-label={`Remove ${s.skill_name}`} onClick={() => deleteSkill(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               ))}
             </CardContent>
@@ -465,7 +473,7 @@ const Dashboard = () => {
           skillName={scheduleMatch?.skill_name || ""}
           onConfirm={bookSession}
         />
-      </div>
+      </main>
     </div>
   );
 };

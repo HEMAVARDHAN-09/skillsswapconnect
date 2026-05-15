@@ -1,0 +1,12 @@
+# SkillSwap
+
+> Peer-to-peer student skill exchange platform with a credit-based learning economy. Students teach what they know to earn credits and spend those credits to learn from peers.
+
+SkillSwap is a campus-focused web app where students list skills they can teach and skills they want to learn. The platform matches teachers with learners, schedules sessions (online via in-app video or in person), and tracks credits, ratings, and a leaderboard.
+
+## Pages
+
+- [Home](/): Overview of SkillSwap and how the credit-based exchange works.
+- [About](/about): Design Thinking journey behind the project.
+- [Login](/login): Sign in to your SkillSwap account.
+- [Register](/register): Create a new SkillSwap account.

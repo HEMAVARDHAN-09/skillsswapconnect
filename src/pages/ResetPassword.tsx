@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -118,7 +119,9 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-primary flex items-center justify-center p-6">
+    <main className="min-h-screen gradient-primary flex items-center justify-center p-6">
+      <SEO title="Reset Password — SkillSwap" description="Set a new password for your SkillSwap account." path="/reset-password" />
+      <h1 className="sr-only">Reset your password</h1>
       <Card className="w-full max-w-md glass-card border-0">
         <CardHeader className="text-center">
           <Link to="/" className="text-2xl font-bold gradient-text mb-2 inline-block">SkillSwap</Link>
@@ -142,7 +145,7 @@ const ResetPassword = () => {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 };
 
