@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const NETWORK_ERRORS = ["Failed to fetch", "NetworkError", "Network request failed", "Load failed"];
 
@@ -68,7 +69,9 @@ const Login = () => {
 
   if (showForgot) {
     return (
-      <div className="min-h-screen gradient-primary flex items-center justify-center p-6">
+      <main className="min-h-screen gradient-primary flex items-center justify-center p-6">
+        <SEO title="Forgot Password — SkillSwap" description="Reset your SkillSwap password using a secure email link." path="/login" />
+        <h1 className="sr-only">Forgot password</h1>
         <Card className="w-full max-w-md glass-card border-0">
           <CardHeader className="text-center">
             <Link to="/" className="text-2xl font-bold gradient-text mb-2 inline-block">SkillSwap</Link>
