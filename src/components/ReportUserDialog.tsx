@@ -85,9 +85,9 @@ const ReportUserDialog = ({
         </DialogHeader>
         <div className="space-y-4 py-1">
           <div className="space-y-2">
-            <Label>Reason <span className="text-destructive">*</span></Label>
+            <Label htmlFor="report-reason">Reason <span className="text-destructive">*</span></Label>
             <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger>
+              <SelectTrigger id="report-reason" aria-label="Report reason">
                 <SelectValue placeholder="Select a reason..." />
               </SelectTrigger>
               <SelectContent>
@@ -98,8 +98,9 @@ const ReportUserDialog = ({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Additional details <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Label htmlFor="report-details">Additional details <span className="text-muted-foreground text-xs">(optional)</span></Label>
             <Textarea
+              id="report-details"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Describe the issue in more detail..."
