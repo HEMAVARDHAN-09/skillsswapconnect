@@ -120,7 +120,7 @@ const ResetPassword = () => {
 
   return (
     <main className="min-h-screen gradient-primary flex items-center justify-center p-6">
-      <SEO title="Reset Password — SkillSwap" description="Set a new password for your SkillSwap account." path="/reset-password" />
+      <SEO title="Reset Password — SkillSwap" description="Use our secure password reset tool to set a new password for your SkillSwap account and regain access to your student dashboard." path="/reset-password" />
       <h1 className="sr-only">Reset your password</h1>
       <Card className="w-full max-w-md glass-card border-0">
         <CardHeader className="text-center">
