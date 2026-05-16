@@ -36,6 +36,7 @@ const Register = () => {
     <main className="min-h-screen gradient-primary flex items-center justify-center p-6">
       <SEO title="Create Your SkillSwap Account" description="Join SkillSwap to teach and learn skills with peers using a fair credit-based exchange." path="/register" />
       <h1 className="sr-only">Create your SkillSwap account</h1>
+      <h2 className="sr-only">Registration form</h2>
       <Card className="w-full max-w-md glass-card border-0">
         <CardHeader className="text-center">
           <Link to="/" className="text-2xl font-bold gradient-text mb-2 inline-block">SkillSwap</Link>

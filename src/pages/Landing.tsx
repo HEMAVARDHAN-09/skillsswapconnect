@@ -32,10 +32,10 @@ const Landing = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
         <div className="container mx-auto text-center relative z-10">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            Learn. Teach.<br />Grow Together.
+            SkillSwap: Peer-to-Peer Skill Exchange for Students
           </h1>
           <p className="text-xl md:text-2xl mb-10 opacity-90 max-w-2xl mx-auto">
-            An innovative peer-to-peer skill exchange platform for students.
+            Learn. Teach. Grow together — an innovative peer-to-peer skill exchange platform for students.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link to="/register">

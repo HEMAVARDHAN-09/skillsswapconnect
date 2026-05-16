@@ -226,6 +226,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <h1 className="sr-only">SkillSwap Admin Dashboard</h1>
       <nav className="glass-card border-b sticky top-0 z-50">
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -235,7 +236,7 @@ const Admin = () => {
           <div className="flex items-center gap-2">
             <Popover open={notifOpen} onOpenChange={setNotifOpen}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}>
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -326,6 +327,7 @@ const Admin = () => {
                 <div className="relative mt-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    aria-label="Search users by name or email"
                     placeholder="Search by name or email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}

@@ -253,6 +253,7 @@ const ChatRoom = () => {
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
+                aria-label="Type a message"
                 className="flex-1 rounded-full bg-secondary/50 border-0"
               />
               <Button

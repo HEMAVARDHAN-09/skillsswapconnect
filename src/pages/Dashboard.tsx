@@ -258,9 +258,9 @@ const Dashboard = () => {
           <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5" /> Add a Skill</CardTitle></CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-5 gap-3">
-              <Input placeholder="Skill name (e.g. Python)" value={skillName} onChange={(e) => setSkillName(e.target.value)} />
+              <Input aria-label="Skill name" placeholder="Skill name (e.g. Python)" value={skillName} onChange={(e) => setSkillName(e.target.value)} />
               <Select value={skillLevel} onValueChange={setSkillLevel}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Skill level"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Beginner">Beginner</SelectItem>
                   <SelectItem value="Intermediate">Intermediate</SelectItem>
@@ -268,14 +268,14 @@ const Dashboard = () => {
                 </SelectContent>
               </Select>
               <Select value={skillType} onValueChange={setSkillType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Skill type"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Teach">Teach</SelectItem>
                   <SelectItem value="Learn">Learn</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={skillMode} onValueChange={setSkillMode}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Skill mode"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Online">Online</SelectItem>
                   <SelectItem value="Offline">Offline</SelectItem>
