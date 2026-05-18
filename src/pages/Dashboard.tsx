@@ -49,9 +49,10 @@ const Dashboard = () => {
   const [scheduleMatch, setScheduleMatch] = useState<Match | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) { navigate("/login"); return; }
     loadData();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Realtime subscription: auto-refresh sessions when teacher accepts
   useEffect(() => {
