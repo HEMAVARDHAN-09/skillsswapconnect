@@ -24,7 +24,7 @@ type SessionRow = {
 type LeaderboardEntry = { user_id: string; name: string; credits: number; avg_rating: number };
 
 const Dashboard = () => {
-  const { user, profile, signOut, refreshProfile, isAdmin } = useAuth();
+  const { user, profile, signOut, refreshProfile, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -49,9 +49,10 @@ const Dashboard = () => {
   const [scheduleMatch, setScheduleMatch] = useState<Match | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) { navigate("/login"); return; }
     loadData();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Realtime subscription: auto-refresh sessions when teacher accepts
   useEffect(() => {
