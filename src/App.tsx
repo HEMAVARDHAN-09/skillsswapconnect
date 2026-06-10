@@ -14,6 +14,7 @@ import ChatRoom from "./pages/ChatRoom";
 import VideoSession from "./pages/VideoSession";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
+import DeveloperApi from "./pages/DeveloperApi";
 
 const queryClient = new QueryClient();
 
