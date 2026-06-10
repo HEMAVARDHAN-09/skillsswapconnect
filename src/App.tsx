@@ -35,6 +35,8 @@ const App = () => (
             <Route path="/chat/:roomId" element={<ChatRoom />} />
             <Route path="/session/:sessionId/video" element={<VideoSession />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/developers/api/v1" element={<DeveloperApi />} />
+            <Route path="/developers/api" element={<DeveloperApi />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
