@@ -200,6 +200,36 @@ export type Database = {
           },
         ]
       }
+      rpc_audit_log: {
+        Row: {
+          args: Json | null
+          called_at: string
+          caller_id: string | null
+          error_message: string | null
+          function_name: string
+          id: number
+          success: boolean
+        }
+        Insert: {
+          args?: Json | null
+          called_at?: string
+          caller_id?: string | null
+          error_message?: string | null
+          function_name: string
+          id?: number
+          success?: boolean
+        }
+        Update: {
+          args?: Json | null
+          called_at?: string
+          caller_id?: string | null
+          error_message?: string | null
+          function_name?: string
+          id?: number
+          success?: boolean
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           created_at: string
@@ -360,12 +390,31 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_suspicious_rpc_activity: {
+        Args: { _minutes?: number; _threshold?: number }
+        Returns: {
+          call_count: number
+          caller_id: string
+          failure_count: number
+          function_name: string
+          last_call: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      log_rpc_call: {
+        Args: {
+          _args: Json
+          _error_message?: string
+          _function_name: string
+          _success?: boolean
+        }
+        Returns: undefined
       }
       validate_session_update: {
         Args: {
