@@ -140,7 +140,7 @@ export default function DeveloperApi() {
             <li>Base URL: <code className="px-1 rounded bg-muted">{BASE_URL}</code></li>
             <li>All RPCs use <strong>HTTP POST</strong> with a JSON body of parameters.</li>
             <li>Headers: <code className="px-1 rounded bg-muted">apikey</code>, <code className="px-1 rounded bg-muted">Authorization: Bearer &lt;jwt&gt;</code>, <code className="px-1 rounded bg-muted">Content-Type: application/json</code>.</li>
-            <li>All calls are recorded in the internal <code>rpc_audit_log</code> table (caller, function, args, success, timestamp).</li>
+            <li>Calls are audited server-side for abuse monitoring.</li>
           </ul>
           <CodeBlock>{`curl -X POST '${BASE_URL}/get_my_profile' \\
   -H "apikey: <publishable-key>" \\
