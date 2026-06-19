@@ -110,14 +110,27 @@ const VideoSession = () => {
 
     const now = new Date();
     const timeStr = now.toTimeString().slice(0, 8);
+
+    // Persist end_time first (allowed for both participants by RLS)
     await supabase
       .from("sessions")
-      .update({ end_time: timeStr, status: "completed" })
+      .update({ end_time: timeStr })
       .eq("id", sessionId);
+
+    // Atomically mark completed and transfer credits via the RPC.
+    // Only the teacher is authorized server-side; learners just leave.
+    if (isTeacher) {
+      const { error } = await supabase.rpc("complete_session", { _session_id: sessionId });
+      if (error) {
+        toast.error("Could not complete session: " + error.message);
+        return;
+      }
+    }
 
     toast.success("Session ended");
     navigate("/dashboard");
   };
+
 
   // Learner listens for teacher ending the session
   useEffect(() => {

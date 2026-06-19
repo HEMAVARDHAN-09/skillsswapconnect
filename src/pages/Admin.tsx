@@ -57,9 +57,21 @@ const Admin = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || !isAdmin) { navigate("/dashboard"); return; }
-    loadAll();
+    if (!user) { navigate("/dashboard"); return; }
+    // Server-validated admin check — do not rely on client-side isAdmin state alone.
+    (async () => {
+      const { data: isServerAdmin, error } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      if (error || !isServerAdmin) {
+        navigate("/dashboard");
+        return;
+      }
+      loadAll();
+    })();
   }, [user, isAdmin, authLoading]);
+
 
   const loadAll = async () => {
     setLoading(true);
