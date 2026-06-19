@@ -91,17 +91,6 @@ const endpoints: Endpoint[] = [
   },
 ];
 
-const internalRpcs = [
-  {
-    name: "has_role(_user_id, _role)",
-    why: "Called from RLS policies. Not intended for direct client use.",
-  },
-  {
-    name: "validate_session_update(...)",
-    why: "Called from the sessions table RLS WITH CHECK clause to enforce the state machine.",
-  },
-];
-
 function CodeBlock({ children }: { children: string }) {
   return (
     <pre className="bg-muted text-foreground rounded-md p-4 text-xs overflow-x-auto border">
@@ -111,8 +100,18 @@ function CodeBlock({ children }: { children: string }) {
 }
 
 export default function DeveloperApi() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/login");
+  }, [user, loading, navigate]);
+
+  if (loading || !user) return null;
+
   return (
     <div className="min-h-screen bg-background">
+
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
