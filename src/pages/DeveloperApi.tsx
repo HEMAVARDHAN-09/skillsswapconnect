@@ -1,11 +1,14 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const API_VERSION = "v1";
-const BASE_URL = "https://rsuyznydlccgiywycogo.supabase.co/rest/v1/rpc";
+const BASE_URL = "/rest/v1/rpc";
+
 
 type Endpoint = {
   name: string;
@@ -91,17 +94,6 @@ const endpoints: Endpoint[] = [
   },
 ];
 
-const internalRpcs = [
-  {
-    name: "has_role(_user_id, _role)",
-    why: "Called from RLS policies. Not intended for direct client use.",
-  },
-  {
-    name: "validate_session_update(...)",
-    why: "Called from the sessions table RLS WITH CHECK clause to enforce the state machine.",
-  },
-];
-
 function CodeBlock({ children }: { children: string }) {
   return (
     <pre className="bg-muted text-foreground rounded-md p-4 text-xs overflow-x-auto border">
@@ -111,8 +103,18 @@ function CodeBlock({ children }: { children: string }) {
 }
 
 export default function DeveloperApi() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/login");
+  }, [user, loading, navigate]);
+
+  if (loading || !user) return null;
+
   return (
     <div className="min-h-screen bg-background">
+
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -138,7 +140,7 @@ export default function DeveloperApi() {
             <li>Base URL: <code className="px-1 rounded bg-muted">{BASE_URL}</code></li>
             <li>All RPCs use <strong>HTTP POST</strong> with a JSON body of parameters.</li>
             <li>Headers: <code className="px-1 rounded bg-muted">apikey</code>, <code className="px-1 rounded bg-muted">Authorization: Bearer &lt;jwt&gt;</code>, <code className="px-1 rounded bg-muted">Content-Type: application/json</code>.</li>
-            <li>All calls are recorded in the internal <code>rpc_audit_log</code> table (caller, function, args, success, timestamp).</li>
+            <li>Calls are audited server-side for abuse monitoring.</li>
           </ul>
           <CodeBlock>{`curl -X POST '${BASE_URL}/get_my_profile' \\
   -H "apikey: <publishable-key>" \\
@@ -210,32 +212,17 @@ export default function DeveloperApi() {
           ))}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="text-2xl font-semibold">Internal-only functions</h2>
-          <p className="text-sm text-muted-foreground">
-            The following functions are SECURITY DEFINER but exist to support row-level security. They
-            are not part of the public API contract and may change without notice.
-          </p>
-          <Card className="p-4">
-            <ul className="space-y-2 text-sm">
-              {internalRpcs.map((r) => (
-                <li key={r.name}>
-                  <code className="font-mono">{r.name}</code>
-                  <span className="text-muted-foreground"> — {r.why}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </section>
+
+
 
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold">Audit logging</h2>
           <p className="text-sm text-muted-foreground">
-            Every call to a documented endpoint is recorded in <code>rpc_audit_log</code>. Only admins can
-            read this table. Use <code className="font-mono">get_suspicious_rpc_activity</code> to find
-            callers exceeding a per-function rate threshold.
+            Every call to a documented endpoint is recorded server-side for abuse monitoring.
+            Workspace admins can review aggregated activity via the admin dashboard.
           </p>
         </section>
+
 
         <section className="pt-6 border-t flex items-center justify-between">
           <p className="text-xs text-muted-foreground">API version {API_VERSION} · Updated {new Date().toISOString().slice(0, 10)}</p>
