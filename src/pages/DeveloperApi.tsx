@@ -218,11 +218,11 @@ export default function DeveloperApi() {
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold">Audit logging</h2>
           <p className="text-sm text-muted-foreground">
-            Every call to a documented endpoint is recorded in <code>rpc_audit_log</code>. Only admins can
-            read this table. Use <code className="font-mono">get_suspicious_rpc_activity</code> to find
-            callers exceeding a per-function rate threshold.
+            Every call to a documented endpoint is recorded server-side for abuse monitoring.
+            Workspace admins can review aggregated activity via the admin dashboard.
           </p>
         </section>
+
 
         <section className="pt-6 border-t flex items-center justify-between">
           <p className="text-xs text-muted-foreground">API version {API_VERSION} · Updated {new Date().toISOString().slice(0, 10)}</p>
