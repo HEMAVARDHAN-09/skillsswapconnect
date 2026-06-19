@@ -1,11 +1,14 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const API_VERSION = "v1";
-const BASE_URL = "https://rsuyznydlccgiywycogo.supabase.co/rest/v1/rpc";
+const BASE_URL = "/rest/v1/rpc";
+
 
 type Endpoint = {
   name: string;
@@ -209,23 +212,8 @@ export default function DeveloperApi() {
           ))}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="text-2xl font-semibold">Internal-only functions</h2>
-          <p className="text-sm text-muted-foreground">
-            The following functions are SECURITY DEFINER but exist to support row-level security. They
-            are not part of the public API contract and may change without notice.
-          </p>
-          <Card className="p-4">
-            <ul className="space-y-2 text-sm">
-              {internalRpcs.map((r) => (
-                <li key={r.name}>
-                  <code className="font-mono">{r.name}</code>
-                  <span className="text-muted-foreground"> — {r.why}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </section>
+
+
 
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold">Audit logging</h2>
