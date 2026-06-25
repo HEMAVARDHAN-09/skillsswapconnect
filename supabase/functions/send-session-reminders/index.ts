@@ -31,22 +31,23 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate: require the service role key or anon key as Bearer token
+    // Authenticate: require the service role key (pg_cron/scheduler) or an admin JWT
     const authHeader = req.headers.get("Authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Only allow calls authenticated with the service role key or anon key (from pg_cron/scheduler)
     const token = authHeader?.replace("Bearer ", "");
-    if (token !== serviceRoleKey && token !== anonKey) {
-      // If a user JWT is provided, verify they are an admin
-      if (!token) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (token !== serviceRoleKey) {
+      // Anything other than the service role key must be a valid admin user JWT.
+      // The public anon key is explicitly NOT accepted.
       const callerClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader! } },
       });
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
         });
       }
     }
+
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
