@@ -407,6 +407,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_banned: { Args: { _user_id: string }; Returns: boolean }
       log_rpc_call: {
         Args: {
           _args: Json
