@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
@@ -237,6 +238,12 @@ const Admin = () => {
   );
 
   return (
+    <>
+    <SEO
+      title="Admin Console — SkillSwap moderation & analytics"
+      description="Internal administration dashboard for SkillSwap moderators: manage users, review reports, monitor sessions, and oversee platform health."
+      path="/admin"
+    />
     <div className="min-h-screen bg-background">
       <h1 className="sr-only">SkillSwap Admin Dashboard</h1>
       <nav className="glass-card border-b sticky top-0 z-50">
@@ -915,6 +922,7 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 };
 

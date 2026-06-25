@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import SEO from "@/components/SEO";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -243,6 +244,12 @@ const VideoSession = () => {
   if (!authorized) return null;
 
   return (
+    <>
+    <SEO
+      title="Live Video Session — SkillSwap"
+      description="Join your scheduled SkillSwap peer learning session over secure video. Connect with your teacher or learner in real time."
+      path="/session"
+    />
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-card px-4 py-3 flex items-center justify-between">
