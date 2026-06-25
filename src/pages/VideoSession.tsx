@@ -348,6 +348,7 @@ const VideoSession = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

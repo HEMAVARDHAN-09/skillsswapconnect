@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import SEO from "@/components/SEO";
 import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -113,6 +114,12 @@ export default function DeveloperApi() {
   if (loading || !user) return null;
 
   return (
+    <>
+    <SEO
+      title="Developer API v1 — SkillSwap RPC reference"
+      description="Reference for SkillSwap's user-callable RPC endpoints: authentication, parameters, sample requests, and responses for the public developer API."
+      path="/developers/api/v1"
+    />
     <div className="min-h-screen bg-background">
 
       <header className="border-b">
