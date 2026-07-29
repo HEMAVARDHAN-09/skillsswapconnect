@@ -364,6 +364,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_teacher_skill: {
+        Args: {
+          _skill_name: string
+          _target: string
+          _type: string
+          _viewer: string
+        }
+        Returns: boolean
+      }
       complete_session: { Args: { _session_id: string }; Returns: undefined }
       get_leaderboard: {
         Args: { _limit?: number }
